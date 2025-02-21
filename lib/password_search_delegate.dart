@@ -49,7 +49,16 @@ class PasswordSearchDelegate extends SearchDelegate<Password?> {
           subtitle: Text(
             'Username: ${passwordItem.username}\nPassword: ${passwordItem.password}',
           ),
-          isThreeLine: true,
+          onTap: () {
+            query = passwordItem.site;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => ShowPasswordScreen(passwordItem: passwordItem),
+              ),
+            );
+          },
         );
       },
     );
