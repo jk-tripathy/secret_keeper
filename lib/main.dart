@@ -1,8 +1,40 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:crypto/crypto.dart';
+import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+
+Uint8List deriveKeyFromPin(String passwordOrPin) {
+  // Convert the password or PIN to bytes.
+  final pinBytes = utf8.encode(passwordOrPin);
+  // Compute the SHA-256 hash.
+  final hash = sha256.convert(pinBytes).bytes;
+  return Uint8List.fromList(hash);
+}
+
+/// Example function to encrypt and then decrypt a message using the derived key.
+void exampleEncryptionWithoutSalt(String userPin, String password) {
+  // Derive the key directly from the user's PIN or password.
+  final keyBytes = deriveKeyFromPin(userPin);
+  final key = encrypt.Key(keyBytes);
+
+  // Generate a random IV for this encryption.
+  final iv = encrypt.IV.fromSecureRandom(16);
+  final encrypter = encrypt.Encrypter(
+    encrypt.AES(key, mode: encrypt.AESMode.cbc),
+  );
+
+  // Encrypt the message.
+  final encrypted = encrypter.encrypt(password, iv: iv);
+
+  // Decrypt the message.
+  final decrypted = encrypter.decrypt(encrypted, iv: iv);
+}
 
 void main() {
   runApp(const MyApp());
