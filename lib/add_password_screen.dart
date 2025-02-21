@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:secret_keeper/main.dart';
+import 'package:secret_keeper/password.dart';
+import 'package:secret_keeper/database_helper.dart';
 
 class AddPasswordScreen extends StatefulWidget {
   const AddPasswordScreen({super.key});
@@ -77,7 +78,7 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                             : null,
               ),
               TextFormField(
-                controller: _passwordController,
+                controller: _masterPasswordController,
                 decoration: InputDecoration(labelText: 'Master Password'),
                 obscureText: true,
                 validator:

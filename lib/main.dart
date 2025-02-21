@@ -1,17 +1,9 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:crypto/crypto.dart';
-import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 import 'package:secret_keeper/add_password_screen.dart';
 import 'package:secret_keeper/database_helper.dart';
 import 'package:secret_keeper/password.dart';
 import 'package:secret_keeper/password_search_delegate.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
+import 'package:secret_keeper/show_password_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -87,7 +79,22 @@ class _HomePageState extends State<HomePage> {
               itemCount: passwords.length,
               itemBuilder: (context, index) {
                 final passwordItem = passwords[index];
-                return Card(child: ListTile(title: Text(passwordItem.site)));
+                return GestureDetector(
+                  onTap: () async {
+                    final res = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                ShowPasswordScreen(passwordItem: passwordItem),
+                      ),
+                    );
+                    if (res == true) {
+                      _refreshPasswords();
+                    }
+                  },
+                  child: Card(child: ListTile(title: Text(passwordItem.site))),
+                );
               },
             );
           }
