@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:secret_keeper/password.dart';
 import 'package:secret_keeper/database_helper.dart';
+import 'package:secret_keeper/colors.dart';
 
 class AddPasswordScreen extends StatefulWidget {
-  const AddPasswordScreen({super.key});
+  final String masterPassword;
+  const AddPasswordScreen({super.key, required this.masterPassword});
 
   @override
   State<AddPasswordScreen> createState() => _AddPasswordScreenState();
@@ -14,10 +16,8 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
   final TextEditingController _siteController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _masterPasswordController =
-      TextEditingController();
 
-  void _saveEntry(String userPin) async {
+  void _saveEntry() async {
     if (_formKey.currentState!.validate()) {
       // Create a new Password instance without an id.
       Password newPassword = Password(
@@ -26,7 +26,7 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
         password: _passwordController.text,
       );
 
-      await DatabaseHelper().insertPassword(userPin, newPassword);
+      await DatabaseHelper().insertPassword(widget.masterPassword, newPassword);
     }
   }
 
@@ -35,67 +35,83 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
     _siteController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
-    _masterPasswordController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Add New Password')),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _siteController,
-                decoration: InputDecoration(labelText: 'Site'),
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? 'Please enter the site'
-                            : null,
-              ),
-              TextFormField(
-                controller: _usernameController,
-                decoration: InputDecoration(labelText: 'Username'),
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? 'Please enter the username'
-                            : null,
-              ),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? 'Please enter the password'
-                            : null,
-              ),
-              TextFormField(
-                controller: _masterPasswordController,
-                decoration: InputDecoration(labelText: 'Master Password'),
-                obscureText: true,
-                validator:
-                    (value) =>
-                        value == null || value.isEmpty
-                            ? 'Please enter the master password'
-                            : null,
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  _saveEntry(_masterPasswordController.text);
-                  Navigator.pop(context, true);
-                },
-                child: Text('Save'),
-              ),
-            ],
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: context.lavender,
+        appBar: AppBar(
+          title: Text('Add New Password'),
+          backgroundColor: context.lavender,
+        ),
+        body: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    controller: _siteController,
+                    decoration: InputDecoration(
+                      labelText: 'Site',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Please enter the site'
+                                : null,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      labelText: 'Username',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Please enter the username'
+                                : null,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextFormField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      border: OutlineInputBorder(),
+                    ),
+                    obscureText: true,
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Please enter the password'
+                                : null,
+                  ),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.accent,
+                  ),
+                  onPressed: () {
+                    _saveEntry();
+                    Navigator.pop(context, true);
+                  },
+                  child: Text('Save', style: TextStyle(color: context.white)),
+                ),
+              ],
+            ),
           ),
         ),
       ),

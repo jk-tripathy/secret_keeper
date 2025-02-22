@@ -31,13 +31,6 @@ class Password {
     return hashedMasterPassword == hashedInputPassword;
   }
 
-  static Future<String> getMasterPassword() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hashedMasterPassword = prefs.getString('masterPassword')!;
-    final masterPassword = utf8.decode(base64.decode(hashedMasterPassword));
-    return masterPassword;
-  }
-
   String encryptPassword(String masterPassword, String password) {
     final key = encrypt.Key.fromUtf8(masterPassword.padRight(32, '0'));
     final iv = encrypt.IV.allZerosOfLength(16);

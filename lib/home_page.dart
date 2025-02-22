@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:secret_keeper/add_password_screen.dart';
+import 'package:secret_keeper/colors.dart';
 import 'package:secret_keeper/database_helper.dart';
 import 'package:secret_keeper/password.dart';
 import 'package:secret_keeper/password_search_delegate.dart';
 import 'package:secret_keeper/show_password_screen.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String masterPassword;
+  const HomePage({super.key, required this.masterPassword});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -33,16 +35,22 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: Colors.deepPurple[100],
       appBar: AppBar(
         backgroundColor: Colors.deepPurple[100],
-        title: Text('Secret Keeper'),
+        title: Text(
+          'Secret Keeper',
+          style: TextStyle(color: context.accent, fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search_rounded, color: Colors.deepPurple),
+            icon: Icon(Icons.search_rounded, color: context.accent),
             onPressed: () async {
               final list = await DatabaseHelper().getPasswords();
               if (!mounted) return;
               showSearch(
                 context: context,
-                delegate: PasswordSearchDelegate(passwords: list),
+                delegate: PasswordSearchDelegate(
+                  passwords: list,
+                  masterPassword: widget.masterPassword,
+                ),
               );
             },
           ),
@@ -69,15 +77,24 @@ class _HomePageState extends State<HomePage> {
                       context,
                       MaterialPageRoute(
                         builder:
-                            (context) =>
-                                ShowPasswordScreen(passwordItem: passwordItem),
+                            (context) => ShowPasswordScreen(
+                              passwordItem: passwordItem,
+                              masterPassword: widget.masterPassword,
+                            ),
                       ),
                     );
                     if (res == true) {
                       _refreshPasswords();
                     }
                   },
-                  child: Card(child: ListTile(title: Text(passwordItem.site))),
+                  child: Card(
+                    child: ListTile(
+                      title: Text(
+                        passwordItem.site,
+                        style: TextStyle(color: context.accent),
+                      ),
+                    ),
+                  ),
                 );
               },
             );
@@ -85,18 +102,23 @@ class _HomePageState extends State<HomePage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: context.accent,
         onPressed: () async {
           // Add a new password
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => AddPasswordScreen()),
+            MaterialPageRoute(
+              builder:
+                  (context) =>
+                      AddPasswordScreen(masterPassword: widget.masterPassword),
+            ),
           );
           // If V
           if (result == true) {
             _refreshPasswords();
           }
         },
-        child: Icon(Icons.add),
+        child: Icon(Icons.add, color: context.white),
       ),
     );
   }

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:secret_keeper/colors.dart';
 import 'package:secret_keeper/database_helper.dart';
 import 'package:secret_keeper/password.dart';
 
 class ShowPasswordScreen extends StatefulWidget {
+  final String masterPassword;
   final Password passwordItem;
 
-  const ShowPasswordScreen({super.key, required this.passwordItem});
+  const ShowPasswordScreen({
+    super.key,
+    required this.passwordItem,
+    required this.masterPassword,
+  });
 
   @override
   State<ShowPasswordScreen> createState() => _ShowPasswordScreenState();
@@ -19,11 +25,8 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.deepPurple[100],
-      appBar: AppBar(
-        title: Text(widget.passwordItem.site),
-        backgroundColor: Colors.deepPurple[100],
-      ),
+      backgroundColor: context.lavender,
+      appBar: AppBar(backgroundColor: context.lavender),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Card(
@@ -45,7 +48,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     IconButton(
-                      color: Colors.deepPurple,
+                      color: context.accent,
                       onPressed: () {
                         DatabaseHelper().deletePassword(
                           widget.passwordItem.site,
@@ -59,16 +62,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                _buildUsernameRow(
-                  label: "Username",
-                  value: widget.passwordItem.username,
-                  icon: Icons.person,
-                  onCopy:
-                      () => _copyToClipboard(
-                        widget.passwordItem.username,
-                        "Username",
-                      ),
-                ),
+                _buildUsernameRow(),
                 const SizedBox(height: 16),
                 _buildPasswordRow(),
               ],
@@ -79,10 +73,48 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
     );
   }
 
+  Widget _buildUsernameRow() {
+    return Row(
+      children: [
+        Icon(Icons.person, color: context.accent),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Username",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                  height: 1.4,
+                ),
+              ),
+              Text(
+                widget.passwordItem.username,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          color: context.accent,
+          icon: const Icon(Icons.copy, size: 20),
+          onPressed:
+              () => _copyToClipboard(widget.passwordItem.username, "Username"),
+          tooltip: "Copy Username",
+        ),
+      ],
+    );
+  }
+
   Widget _buildPasswordRow() {
     return Row(
       children: [
-        const Icon(Icons.lock, color: Colors.blueGrey),
+        Icon(Icons.lock, color: context.accent),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -106,14 +138,21 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
           ),
         ),
         IconButton(
-          color: Colors.deepPurple,
+          color: context.accent,
           icon: Icon(
             _obscurePassword ? Icons.visibility : Icons.visibility_off,
             size: 22,
           ),
           onPressed: () async {
             if (_obscurePassword && _decryptedPassword == null) {
-              _promptForMasterPassword();
+              final decrypted = widget.passwordItem.decryptPassword(
+                widget.masterPassword,
+                widget.passwordItem.password,
+              ); //
+              setState(() {
+                _decryptedPassword = decrypted;
+                _obscurePassword = false;
+              });
             } else {
               setState(() => _obscurePassword = !_obscurePassword);
             }
@@ -121,52 +160,10 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
           tooltip: _obscurePassword ? "Show Password" : "Hide Password",
         ),
         IconButton(
-          color: Colors.deepPurple,
+          color: context.accent,
           icon: const Icon(Icons.copy, size: 20),
           onPressed: () => _copyToClipboard(_decryptedPassword!, "Password"),
           tooltip: "Copy Password",
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUsernameRow({
-    required String label,
-    required String value,
-    required IconData icon,
-    required VoidCallback onCopy,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.blueGrey),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                  height: 1.4,
-                ),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-        IconButton(
-          color: Colors.deepPurple,
-          icon: const Icon(Icons.copy, size: 20),
-          onPressed: onCopy,
-          tooltip: "Copy $label",
         ),
       ],
     );
@@ -179,44 +176,6 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
         content: Text('$label copied to clipboard!'),
         duration: const Duration(seconds: 2),
       ),
-    );
-  }
-
-  void _promptForMasterPassword() {
-    final TextEditingController controller = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Enter Master Password'),
-            content: TextField(
-              controller: controller,
-              obscureText: true,
-              decoration: const InputDecoration(hintText: 'Master Password'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  String inputPassword = controller.text;
-                  final decrypted = widget.passwordItem.decryptPassword(
-                    inputPassword,
-                    widget.passwordItem.password,
-                  ); //
-                  setState(() {
-                    _decryptedPassword = decrypted;
-                    _obscurePassword = false;
-                  });
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Submit'),
-              ),
-            ],
-          ),
     );
   }
 }

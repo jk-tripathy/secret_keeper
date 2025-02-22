@@ -3,9 +3,13 @@ import 'package:secret_keeper/password.dart';
 import 'package:secret_keeper/show_password_screen.dart';
 
 class PasswordSearchDelegate extends SearchDelegate<Password?> {
+  final String masterPassword;
   final List<Password> passwords;
 
-  PasswordSearchDelegate({required this.passwords});
+  PasswordSearchDelegate({
+    required this.passwords,
+    required this.masterPassword,
+  });
 
   // Actions for the app bar (clear the search query)
   @override
@@ -55,7 +59,10 @@ class PasswordSearchDelegate extends SearchDelegate<Password?> {
               context,
               MaterialPageRoute(
                 builder:
-                    (context) => ShowPasswordScreen(passwordItem: passwordItem),
+                    (context) => ShowPasswordScreen(
+                      passwordItem: passwordItem,
+                      masterPassword: masterPassword,
+                    ),
               ),
             );
           },
@@ -86,7 +93,10 @@ class PasswordSearchDelegate extends SearchDelegate<Password?> {
               context,
               MaterialPageRoute(
                 builder:
-                    (context) => ShowPasswordScreen(passwordItem: passwordItem),
+                    (context) => ShowPasswordScreen(
+                      passwordItem: passwordItem,
+                      masterPassword: masterPassword,
+                    ),
               ),
             );
           },

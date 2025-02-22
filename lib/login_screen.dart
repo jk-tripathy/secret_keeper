@@ -148,7 +148,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     _masterPasswordController.text,
                                   );
                               if (isCorrect) {
-                                _navigateToHomePage();
+                                _navigateToHomePage(
+                                  _masterPasswordController.text,
+                                );
                               } else {
                                 _showSnackBar('Incorrect Master Password.');
                               }
@@ -157,7 +159,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               await Password.setAndSaveMasterPassword(
                                 _signUpPasswordController1.text,
                               );
-                              _navigateToHomePage();
+                              _navigateToHomePage(
+                                _signUpPasswordController1.text,
+                              );
                             } else {
                               _showSnackBar('Passwords do not match.');
                             }
@@ -179,10 +183,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _navigateToHomePage() {
+  void _navigateToHomePage(String masterPassword) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomePage()),
+      MaterialPageRoute(
+        builder: (context) => HomePage(masterPassword: masterPassword),
+      ),
     );
   }
 
