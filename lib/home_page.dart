@@ -96,6 +96,7 @@ class _HomePageState extends State<HomePage> {
                       trailing: IconButton(
                         onPressed: () {
                           final updatedPassword = passwordItem.copyWith(
+                            widget.masterPassword,
                             pinned: passwordItem.pinned == 1 ? 0 : 1,
                           );
                           DatabaseHelper().updatePassword(

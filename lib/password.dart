@@ -51,17 +51,19 @@ class Password {
     return decrypted;
   }
 
-  Password copyWith({
+  Password copyWith(
+    String masterPassword, {
     String? site,
     String? username,
     String? password,
     int? id,
     int? pinned,
   }) {
+    String decPwd = decryptPassword(masterPassword, this.password);
     return Password(
       site: site ?? this.site,
       username: username ?? this.username,
-      password: password ?? this.password,
+      password: password ?? decPwd,
       id: id ?? this.id,
       pinned: pinned ?? this.pinned,
     );
