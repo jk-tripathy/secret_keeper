@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:secret_keeper/add_password_screen.dart';
 import 'package:secret_keeper/colors.dart';
 import 'package:secret_keeper/database_helper.dart';
 import 'package:secret_keeper/password.dart';
@@ -26,7 +27,23 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.lavender,
-      appBar: AppBar(backgroundColor: context.lavender),
+      appBar: AppBar(
+        backgroundColor: context.lavender,
+        actions: [
+          IconButton(
+            color: context.accent,
+            onPressed: () {
+              DatabaseHelper().deletePassword(
+                widget.passwordItem.site,
+                widget.passwordItem.username,
+                widget.passwordItem.password,
+              );
+              Navigator.of(context).pop(true);
+            },
+            icon: Icon(Icons.delete_outline_rounded),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Card(
@@ -47,17 +64,34 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                       widget.passwordItem.site,
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
+
                     IconButton(
-                      color: context.accent,
-                      onPressed: () {
+                      icon: Icon(Icons.edit, color: context.accent),
+                      onPressed: () async {
                         DatabaseHelper().deletePassword(
                           widget.passwordItem.site,
                           widget.passwordItem.username,
                           widget.passwordItem.password,
                         );
-                        Navigator.of(context).pop(true);
+                        final decryptedPassword = widget.passwordItem
+                            .decryptPassword(
+                              widget.masterPassword,
+                              widget.passwordItem.password,
+                            );
+                        final res = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => AddPasswordScreen(
+                                  masterPassword: widget.masterPassword,
+                                  site: widget.passwordItem.site,
+                                  username: widget.passwordItem.username,
+                                  password: decryptedPassword,
+                                ),
+                          ),
+                        );
+                        Navigator.of(context).pop(res);
                       },
-                      icon: Icon(Icons.delete_outline_rounded),
                     ),
                   ],
                 ),

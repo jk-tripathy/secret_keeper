@@ -5,7 +5,17 @@ import 'package:secret_keeper/colors.dart';
 
 class AddPasswordScreen extends StatefulWidget {
   final String masterPassword;
-  const AddPasswordScreen({super.key, required this.masterPassword});
+  final String? site;
+  final String? username;
+  final String? password;
+
+  const AddPasswordScreen({
+    super.key,
+    required this.masterPassword,
+    this.site,
+    this.username,
+    this.password,
+  });
 
   @override
   State<AddPasswordScreen> createState() => _AddPasswordScreenState();
@@ -27,6 +37,20 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
       );
 
       await DatabaseHelper().insertPassword(widget.masterPassword, newPassword);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.site != null) {
+      _siteController.text = widget.site!;
+    }
+    if (widget.username != null) {
+      _usernameController.text = widget.username!;
+    }
+    if (widget.password != null) {
+      _passwordController.text = widget.password!;
     }
   }
 

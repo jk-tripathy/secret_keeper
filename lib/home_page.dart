@@ -113,7 +113,6 @@ class _HomePageState extends State<HomePage> {
                       AddPasswordScreen(masterPassword: widget.masterPassword),
             ),
           );
-          // If V
           if (result == true) {
             _refreshPasswords();
           }
