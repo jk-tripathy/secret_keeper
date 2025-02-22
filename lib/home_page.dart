@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    passwordsFuture = DatabaseHelper().getPasswords();
+    _refreshPasswords();
   }
 
   void _refreshPasswords() {
@@ -60,70 +60,73 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        body: FutureBuilder<List<Password>>(
-          future: passwordsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text('No passwords found.'));
-            } else {
-              final passwords = snapshot.data!;
-              return ListView.builder(
-                itemCount: passwords.length,
-                itemBuilder: (context, index) {
-                  final passwordItem = passwords[index];
-                  return GestureDetector(
-                    onTap: () async {
-                      final res = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => ShowPasswordScreen(
-                                passwordItem: passwordItem,
-                                masterPassword: widget.masterPassword,
-                              ),
-                        ),
-                      );
-                      if (res == true) {
+        body: RefreshIndicator(
+          onRefresh: () async {
+            _refreshPasswords();
+          },
+          child: FutureBuilder<List<Password>>(
+            future: passwordsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Center(child: Text('No passwords found.'));
+              } else {
+                final passwords = snapshot.data!;
+                return ListView.builder(
+                  itemCount: passwords.length,
+                  itemBuilder: (context, index) {
+                    final passwordItem = passwords[index];
+                    return GestureDetector(
+                      onTap: () async {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => ShowPasswordScreen(
+                                  passwordItem: passwordItem,
+                                  masterPassword: widget.masterPassword,
+                                ),
+                          ),
+                        );
                         _refreshPasswords();
-                      }
-                    },
-                    child: Card(
-                      child: ListTile(
-                        title: Text(
-                          passwordItem.site,
-                          style: TextStyle(color: context.accent),
-                        ),
-                        trailing: IconButton(
-                          onPressed: () {
-                            final updatedPassword = passwordItem.copyWith(
-                              widget.masterPassword,
-                              pinned: passwordItem.pinned == 1 ? 0 : 1,
-                            );
-                            DatabaseHelper().updatePassword(
-                              widget.masterPassword,
-                              updatedPassword,
-                            );
+                      },
+                      child: Card(
+                        child: ListTile(
+                          title: Text(
+                            passwordItem.site,
+                            style: TextStyle(color: context.accent),
+                          ),
+                          trailing: IconButton(
+                            onPressed: () {
+                              final updatedPassword = passwordItem.copyWith(
+                                widget.masterPassword,
+                                pinned: passwordItem.pinned == 1 ? 0 : 1,
+                              );
+                              DatabaseHelper().updatePassword(
+                                widget.masterPassword,
+                                updatedPassword,
+                              );
 
-                            _refreshPasswords();
-                          },
-                          icon: Icon(
-                            passwordItem.pinned == 1
-                                ? Icons.push_pin
-                                : Icons.push_pin_outlined,
-                            color: context.accent,
+                              _refreshPasswords();
+                            },
+                            icon: Icon(
+                              passwordItem.pinned == 1
+                                  ? Icons.push_pin
+                                  : Icons.push_pin_outlined,
+                              color: context.accent,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              );
-            }
-          },
+                    );
+                  },
+                );
+              }
+            },
+          ),
         ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: context.accent,

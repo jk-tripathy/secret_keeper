@@ -5,11 +5,11 @@ import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Password {
-  final String site;
-  final String username;
-  final String password;
+  String site;
+  String username;
+  String password;
   final int? id;
-  final int pinned;
+  int pinned;
 
   Password({
     required this.site,
