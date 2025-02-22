@@ -99,7 +99,6 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                           setState(() {
                             widget.passwordItem.pinned = updatedPassword.pinned;
                           });
-                          print(widget.passwordItem.pinned);
                         },
                         icon: Icon(
                           widget.passwordItem.pinned == 1

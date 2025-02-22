@@ -27,6 +27,12 @@ class Password {
     await prefs.setString('masterPassword', hashedMasterPassword);
   }
 
+  static Future<void> clearMasterPassword() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isMasterPasswordSet', false);
+    await prefs.remove('masterPassword');
+  }
+
   static Future<bool> validateMasterPassword(String inputPassword) async {
     final prefs = await SharedPreferences.getInstance();
     final hashedMasterPassword = prefs.getString('masterPassword');

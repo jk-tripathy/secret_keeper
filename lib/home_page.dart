@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:secret_keeper/add_password_screen.dart';
 import 'package:secret_keeper/colors.dart';
 import 'package:secret_keeper/database_helper.dart';
+import 'package:secret_keeper/login_screen.dart';
 import 'package:secret_keeper/password.dart';
 import 'package:secret_keeper/password_search_delegate.dart';
 import 'package:secret_keeper/show_password_screen.dart';
@@ -59,6 +60,83 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ],
+        ),
+        drawer: Drawer(
+          backgroundColor: context.lavender,
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(color: context.accent),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: context.white,
+                      child: Image.asset(
+                        'assets/icon/logo.png',
+                        height: 50,
+                        width: 50,
+                      ),
+                    ),
+                    SizedBox(height: 10, width: double.infinity),
+                    Text(
+                      'Secret Keeper',
+                      style: TextStyle(
+                        color: context.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
+                ),
+                child: Card(
+                  child: ListTile(
+                    leading: Icon(Icons.healing, color: context.accent),
+                    title: Text('Fix Master Password'),
+                    onTap: () async {
+                      await Password.clearMasterPassword();
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginScreen()),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Expanded(child: Container()),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
+                ),
+                child: Card(
+                  color: context.accent,
+                  child: ListTile(
+                    leading: Icon(Icons.logout, color: context.white),
+                    title: Text(
+                      'Logout',
+                      style: TextStyle(color: context.white),
+                    ),
+                    onTap: () async {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginScreen()),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         body: RefreshIndicator(
           onRefresh: () async {
