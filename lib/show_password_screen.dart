@@ -19,7 +19,11 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.passwordItem.site)),
+      backgroundColor: Colors.deepPurple[100],
+      appBar: AppBar(
+        title: Text(widget.passwordItem.site),
+        backgroundColor: Colors.deepPurple[100],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Card(
@@ -41,13 +45,13 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     IconButton(
+                      color: Colors.deepPurple,
                       onPressed: () {
                         DatabaseHelper().deletePassword(
                           widget.passwordItem.site,
                           widget.passwordItem.username,
                           widget.passwordItem.password,
                         );
-                        print('Deleted');
                         Navigator.of(context).pop(true);
                       },
                       icon: Icon(Icons.delete_outline_rounded),
@@ -78,7 +82,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
   Widget _buildPasswordRow() {
     return Row(
       children: [
-        const Icon(Icons.lock, color: Colors.amber),
+        const Icon(Icons.lock, color: Colors.blueGrey),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -102,6 +106,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
           ),
         ),
         IconButton(
+          color: Colors.deepPurple,
           icon: Icon(
             _obscurePassword ? Icons.visibility : Icons.visibility_off,
             size: 22,
@@ -114,6 +119,12 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
             }
           },
           tooltip: _obscurePassword ? "Show Password" : "Hide Password",
+        ),
+        IconButton(
+          color: Colors.deepPurple,
+          icon: const Icon(Icons.copy, size: 20),
+          onPressed: () => _copyToClipboard(_decryptedPassword!, "Password"),
+          tooltip: "Copy Password",
         ),
       ],
     );
@@ -152,6 +163,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
           ),
         ),
         IconButton(
+          color: Colors.deepPurple,
           icon: const Icon(Icons.copy, size: 20),
           onPressed: onCopy,
           tooltip: "Copy $label",

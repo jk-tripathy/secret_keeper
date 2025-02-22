@@ -49,11 +49,13 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.deepPurple[100],
       appBar: AppBar(
+        backgroundColor: Colors.deepPurple[100],
         title: Text('Secret Keeper'),
         actions: [
           IconButton(
-            icon: Icon(Icons.search_rounded),
+            icon: Icon(Icons.search_rounded, color: Colors.deepPurple),
             onPressed: () async {
               final list = await DatabaseHelper().getPasswords();
               showSearch(

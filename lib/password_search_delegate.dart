@@ -12,7 +12,7 @@ class PasswordSearchDelegate extends SearchDelegate<Password?> {
   List<Widget> buildActions(BuildContext context) {
     return [
       IconButton(
-        icon: Icon(Icons.clear),
+        icon: Icon(Icons.clear, color: Colors.deepPurple),
         onPressed: () {
           query = '';
           showSuggestions(context);
@@ -25,7 +25,7 @@ class PasswordSearchDelegate extends SearchDelegate<Password?> {
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(
-      icon: Icon(Icons.arrow_back),
+      icon: Icon(Icons.arrow_back, color: Colors.deepPurple),
       onPressed: () {
         close(context, null);
       },
