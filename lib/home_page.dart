@@ -73,7 +73,6 @@ class _HomePageState extends State<HomePage> {
                 final passwordItem = passwords[index];
                 return GestureDetector(
                   onTap: () async {
-                    print('id: ${passwordItem.id}');
                     final res = await Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -93,6 +92,25 @@ class _HomePageState extends State<HomePage> {
                       title: Text(
                         passwordItem.site,
                         style: TextStyle(color: context.accent),
+                      ),
+                      trailing: IconButton(
+                        onPressed: () {
+                          final updatedPassword = passwordItem.copyWith(
+                            pinned: passwordItem.pinned == 1 ? 0 : 1,
+                          );
+                          DatabaseHelper().updatePassword(
+                            widget.masterPassword,
+                            updatedPassword,
+                          );
+
+                          _refreshPasswords();
+                        },
+                        icon: Icon(
+                          passwordItem.pinned == 1
+                              ? Icons.push_pin
+                              : Icons.push_pin_outlined,
+                          color: context.accent,
+                        ),
                       ),
                     ),
                   ),

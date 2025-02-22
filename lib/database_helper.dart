@@ -17,34 +17,58 @@ class DatabaseHelper {
     return _database!;
   }
 
+  void _onCreate(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE passwords(
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        site TEXT,
+        username TEXT,
+        password TEXT
+        pinned INTEGER DEFAULT 0
+      )
+    ''');
+  }
+
+  void _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        ALTER TABLE passwords
+        ADD COLUMN pinned INTEGER DEFAULT 0
+      ''');
+    }
+  }
+
   Future<Database> _initDatabase() async {
     // Get the directory for the database
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     String path = join(documentsDirectory.path, 'passwords.db');
+    int version = 2;
 
-    return await openDatabase(
+    final db = await openDatabase(
       path,
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE passwords(
-            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-            site TEXT,
-            username TEXT,
-            password TEXT
-          )
-        ''');
-      },
+      version: version,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
+
+    return db;
   }
 
   // Function to fetch all password records
   Future<List<Password>> getPasswords() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('passwords');
-    return List.generate(maps.length, (i) {
+    final generatedList = List.generate(maps.length, (i) {
       return Password.fromMap(maps[i]);
     });
+    generatedList.sort((a, b) {
+      if (a.pinned != b.pinned) {
+        return b.pinned.compareTo(a.pinned);
+      } else {
+        return a.site.toLowerCase().compareTo(b.site.toLowerCase());
+      }
+    });
+    return generatedList;
   }
 
   // Function to insert a new password record
@@ -59,8 +83,6 @@ class DatabaseHelper {
   }
 
   Future<int> updatePassword(String masterPassword, Password password) async {
-    print("UPDATE PASSWORD");
-    print(password);
     final db = await database;
     return await db.update(
       'passwords',

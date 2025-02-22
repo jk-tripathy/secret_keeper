@@ -53,7 +53,6 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
         username: _usernameController.text,
         password: _passwordController.text,
       );
-      print("update id: ${updatedPassword.id}");
 
       await DatabaseHelper().updatePassword(
         widget.masterPassword,
