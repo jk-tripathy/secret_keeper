@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> setAndSaveMasterPassword() async {
     final prefs = await SharedPreferences.getInstance();
     final hashedMasterPassword =
-        sha256.convert(utf8.encode(_masterPasswordController.text)).toString();
+        sha256.convert(utf8.encode(_signUpPasswordController1.text)).toString();
     await prefs.setBool('isMasterPasswordSet', true);
     await prefs.setString('masterPassword', hashedMasterPassword);
   }
@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  Future<bool> checkMasterPassword() async {
+  Future<bool> validateMasterPassword() async {
     final prefs = await SharedPreferences.getInstance();
     final hashedMasterPassword = prefs.getString('masterPassword');
     final hashedInputPassword =
@@ -161,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           onPressed: () async {
                             if (_isMasterPasswordSet) {
-                              bool isCorrect = await checkMasterPassword();
+                              bool isCorrect = await validateMasterPassword();
                               if (isCorrect) {
                                 _navigateToHomePage(
                                   _masterPasswordController.text,
