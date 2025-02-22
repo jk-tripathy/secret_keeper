@@ -7,9 +7,9 @@ import 'package:secret_keeper/password.dart';
 
 class ShowPasswordScreen extends StatefulWidget {
   final String masterPassword;
-  final Password passwordItem;
+  Password passwordItem;
 
-  const ShowPasswordScreen({
+  ShowPasswordScreen({
     super.key,
     required this.passwordItem,
     required this.masterPassword,
@@ -95,15 +95,11 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                             widget.masterPassword,
                             updatedPassword,
                           );
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => ShowPasswordScreen(
-                                    passwordItem: updatedPassword,
-                                    masterPassword: widget.masterPassword,
-                                  ),
-                            ),
-                          );
+
+                          setState(() {
+                            widget.passwordItem.pinned = updatedPassword.pinned;
+                          });
+                          print(widget.passwordItem.pinned);
                         },
                         icon: Icon(
                           widget.passwordItem.pinned == 1

@@ -20,7 +20,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    passwordsFuture = DatabaseHelper().getPasswords();
+    _refreshPasswords();
   }
 
   void _refreshPasswords() {
@@ -77,7 +77,7 @@ class _HomePageState extends State<HomePage> {
                   final passwordItem = passwords[index];
                   return GestureDetector(
                     onTap: () async {
-                      final res = await Navigator.push(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder:
@@ -87,9 +87,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                         ),
                       );
-                      if (res == true) {
-                        _refreshPasswords();
-                      }
+                      _refreshPasswords();
                     },
                     child: Card(
                       child: ListTile(
