@@ -31,113 +31,119 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.deepPurple[100],
-      appBar: AppBar(
+    return SafeArea(
+      child: Scaffold(
         backgroundColor: Colors.deepPurple[100],
-        title: Text(
-          'Secret Keeper',
-          style: TextStyle(color: context.accent, fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search_rounded, color: context.accent),
-            onPressed: () async {
-              final list = await DatabaseHelper().getPasswords();
-              if (!mounted) return;
-              showSearch(
-                context: context,
-                delegate: PasswordSearchDelegate(
-                  passwords: list,
-                  masterPassword: widget.masterPassword,
-                ),
-              );
-            },
+        appBar: AppBar(
+          backgroundColor: Colors.deepPurple[100],
+          title: Text(
+            'Secret Keeper',
+            style: TextStyle(
+              color: context.accent,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ],
-      ),
-      body: FutureBuilder<List<Password>>(
-        future: passwordsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('No passwords found.'));
-          } else {
-            final passwords = snapshot.data!;
-            return ListView.builder(
-              itemCount: passwords.length,
-              itemBuilder: (context, index) {
-                final passwordItem = passwords[index];
-                return GestureDetector(
-                  onTap: () async {
-                    final res = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => ShowPasswordScreen(
-                              passwordItem: passwordItem,
-                              masterPassword: widget.masterPassword,
-                            ),
-                      ),
-                    );
-                    if (res == true) {
-                      _refreshPasswords();
-                    }
-                  },
-                  child: Card(
-                    child: ListTile(
-                      title: Text(
-                        passwordItem.site,
-                        style: TextStyle(color: context.accent),
-                      ),
-                      trailing: IconButton(
-                        onPressed: () {
-                          final updatedPassword = passwordItem.copyWith(
-                            widget.masterPassword,
-                            pinned: passwordItem.pinned == 1 ? 0 : 1,
-                          );
-                          DatabaseHelper().updatePassword(
-                            widget.masterPassword,
-                            updatedPassword,
-                          );
-
-                          _refreshPasswords();
-                        },
-                        icon: Icon(
-                          passwordItem.pinned == 1
-                              ? Icons.push_pin
-                              : Icons.push_pin_outlined,
-                          color: context.accent,
-                        ),
-                      ),
-                    ),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.search_rounded, color: context.accent),
+              onPressed: () async {
+                final list = await DatabaseHelper().getPasswords();
+                if (!mounted) return;
+                showSearch(
+                  context: context,
+                  delegate: PasswordSearchDelegate(
+                    passwords: list,
+                    masterPassword: widget.masterPassword,
                   ),
                 );
               },
-            );
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: context.accent,
-        onPressed: () async {
-          // Add a new password
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (context) =>
-                      AddPasswordScreen(masterPassword: widget.masterPassword),
             ),
-          );
-          if (result == true) {
-            _refreshPasswords();
-          }
-        },
-        child: Icon(Icons.add, color: context.white),
+          ],
+        ),
+        body: FutureBuilder<List<Password>>(
+          future: passwordsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(child: Text('No passwords found.'));
+            } else {
+              final passwords = snapshot.data!;
+              return ListView.builder(
+                itemCount: passwords.length,
+                itemBuilder: (context, index) {
+                  final passwordItem = passwords[index];
+                  return GestureDetector(
+                    onTap: () async {
+                      final res = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) => ShowPasswordScreen(
+                                passwordItem: passwordItem,
+                                masterPassword: widget.masterPassword,
+                              ),
+                        ),
+                      );
+                      if (res == true) {
+                        _refreshPasswords();
+                      }
+                    },
+                    child: Card(
+                      child: ListTile(
+                        title: Text(
+                          passwordItem.site,
+                          style: TextStyle(color: context.accent),
+                        ),
+                        trailing: IconButton(
+                          onPressed: () {
+                            final updatedPassword = passwordItem.copyWith(
+                              widget.masterPassword,
+                              pinned: passwordItem.pinned == 1 ? 0 : 1,
+                            );
+                            DatabaseHelper().updatePassword(
+                              widget.masterPassword,
+                              updatedPassword,
+                            );
+
+                            _refreshPasswords();
+                          },
+                          icon: Icon(
+                            passwordItem.pinned == 1
+                                ? Icons.push_pin
+                                : Icons.push_pin_outlined,
+                            color: context.accent,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            }
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: context.accent,
+          onPressed: () async {
+            // Add a new password
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => AddPasswordScreen(
+                      masterPassword: widget.masterPassword,
+                    ),
+              ),
+            );
+            if (result == true) {
+              _refreshPasswords();
+            }
+          },
+          child: Icon(Icons.add, color: context.white),
+        ),
       ),
     );
   }

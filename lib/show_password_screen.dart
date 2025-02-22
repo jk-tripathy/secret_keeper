@@ -25,74 +25,101 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.lavender,
-      appBar: AppBar(
+    return SafeArea(
+      child: Scaffold(
         backgroundColor: context.lavender,
-        actions: [
-          IconButton(
-            color: context.accent,
-            onPressed: () {
-              DatabaseHelper().deletePassword(widget.passwordItem.id!);
-              Navigator.of(context).pop(true);
-            },
-            icon: Icon(Icons.delete_outline_rounded),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Card(
-          elevation: 5,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      widget.passwordItem.site,
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-
-                    IconButton(
-                      icon: Icon(Icons.edit, color: context.accent),
-                      onPressed: () async {
-                        final decryptedPassword = widget.passwordItem
-                            .decryptPassword(
-                              widget.masterPassword,
-                              widget.passwordItem.password,
-                            );
-                        final res = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => AddPasswordScreen(
-                                  masterPassword: widget.masterPassword,
-                                  id: widget.passwordItem.id,
-                                  site: widget.passwordItem.site,
-                                  username: widget.passwordItem.username,
-                                  password: decryptedPassword,
-                                  isUpdate: true,
-                                ),
-                          ),
-                        );
-                        Navigator.of(context).pop(res);
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildUsernameRow(),
-                const SizedBox(height: 16),
-                _buildPasswordRow(),
-              ],
+        appBar: AppBar(
+          backgroundColor: context.lavender,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.edit, color: context.accent),
+              onPressed: () async {
+                final decryptedPassword = widget.passwordItem.decryptPassword(
+                  widget.masterPassword,
+                  widget.passwordItem.password,
+                );
+                final res = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => AddPasswordScreen(
+                          masterPassword: widget.masterPassword,
+                          id: widget.passwordItem.id,
+                          site: widget.passwordItem.site,
+                          username: widget.passwordItem.username,
+                          password: decryptedPassword,
+                          isUpdate: true,
+                        ),
+                  ),
+                );
+                Navigator.of(context).pop(res);
+              },
+            ),
+            IconButton(
+              color: context.accent,
+              onPressed: () {
+                DatabaseHelper().deletePassword(widget.passwordItem.id!);
+                Navigator.of(context).pop(true);
+              },
+              icon: Icon(Icons.delete_outline_rounded),
+            ),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Card(
+            elevation: 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        widget.passwordItem.site,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          final updatedPassword = widget.passwordItem.copyWith(
+                            widget.masterPassword,
+                            pinned: widget.passwordItem.pinned == 1 ? 0 : 1,
+                          );
+                          DatabaseHelper().updatePassword(
+                            widget.masterPassword,
+                            updatedPassword,
+                          );
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ShowPasswordScreen(
+                                    passwordItem: updatedPassword,
+                                    masterPassword: widget.masterPassword,
+                                  ),
+                            ),
+                          );
+                        },
+                        icon: Icon(
+                          widget.passwordItem.pinned == 1
+                              ? Icons.push_pin
+                              : Icons.push_pin_outlined,
+                          color: context.accent,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildUsernameRow(),
+                  const SizedBox(height: 16),
+                  _buildPasswordRow(),
+                ],
+              ),
             ),
           ),
         ),
