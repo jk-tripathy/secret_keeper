@@ -6,8 +6,7 @@ import 'package:secret_keeper/password_search_delegate.dart';
 import 'package:secret_keeper/show_password_screen.dart';
 
 class HomePage extends StatefulWidget {
-  final String masterPassword;
-  const HomePage({super.key, required this.masterPassword});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();

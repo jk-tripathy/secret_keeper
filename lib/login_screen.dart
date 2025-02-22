@@ -1,10 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:secret_keeper/home_page.dart';
 import 'package:secret_keeper/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:crypto/crypto.dart';
+import 'package:secret_keeper/password.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,27 +17,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final _signUpPasswordController1 = TextEditingController();
   final _signUpPasswordController2 = TextEditingController();
 
-  Future<void> setAndSaveMasterPassword() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hashedMasterPassword =
-        sha256.convert(utf8.encode(_signUpPasswordController1.text)).toString();
-    await prefs.setBool('isMasterPasswordSet', true);
-    await prefs.setString('masterPassword', hashedMasterPassword);
-  }
-
   Future<void> checkMasterPasswordSet() async {
     final prefs = await SharedPreferences.getInstance();
     return setState(() {
       _isMasterPasswordSet = prefs.getBool('isMasterPasswordSet') ?? false;
     });
-  }
-
-  Future<bool> validateMasterPassword() async {
-    final prefs = await SharedPreferences.getInstance();
-    final hashedMasterPassword = prefs.getString('masterPassword');
-    final hashedInputPassword =
-        sha256.convert(utf8.encode(_masterPasswordController.text)).toString();
-    return hashedMasterPassword == hashedInputPassword;
   }
 
   @override
@@ -161,20 +143,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           onPressed: () async {
                             if (_isMasterPasswordSet) {
-                              bool isCorrect = await validateMasterPassword();
+                              bool isCorrect =
+                                  await Password.validateMasterPassword(
+                                    _masterPasswordController.text,
+                                  );
                               if (isCorrect) {
-                                _navigateToHomePage(
-                                  _masterPasswordController.text,
-                                );
+                                _navigateToHomePage();
                               } else {
                                 _showSnackBar('Incorrect Master Password.');
                               }
                             } else if (_signUpPasswordController1.text ==
                                 _signUpPasswordController2.text) {
-                              await setAndSaveMasterPassword();
-                              _navigateToHomePage(
+                              await Password.setAndSaveMasterPassword(
                                 _signUpPasswordController1.text,
                               );
+                              _navigateToHomePage();
                             } else {
                               _showSnackBar('Passwords do not match.');
                             }
@@ -196,12 +179,10 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _navigateToHomePage(String password) {
+  void _navigateToHomePage() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => HomePage(masterPassword: password),
-      ),
+      MaterialPageRoute(builder: (context) => HomePage()),
     );
   }
 

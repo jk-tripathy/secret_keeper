@@ -1,4 +1,8 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Password {
   final String site;
@@ -10,6 +14,29 @@ class Password {
     required this.username,
     required this.password,
   });
+
+  static Future<void> setAndSaveMasterPassword(String masterPassword) async {
+    final prefs = await SharedPreferences.getInstance();
+    final hashedMasterPassword =
+        sha256.convert(utf8.encode(masterPassword)).toString();
+    await prefs.setBool('isMasterPasswordSet', true);
+    await prefs.setString('masterPassword', hashedMasterPassword);
+  }
+
+  static Future<bool> validateMasterPassword(String inputPassword) async {
+    final prefs = await SharedPreferences.getInstance();
+    final hashedMasterPassword = prefs.getString('masterPassword');
+    final hashedInputPassword =
+        sha256.convert(utf8.encode(inputPassword)).toString();
+    return hashedMasterPassword == hashedInputPassword;
+  }
+
+  static Future<String> getMasterPassword() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hashedMasterPassword = prefs.getString('masterPassword')!;
+    final masterPassword = utf8.decode(base64.decode(hashedMasterPassword));
+    return masterPassword;
+  }
 
   String encryptPassword(String masterPassword, String password) {
     final key = encrypt.Key.fromUtf8(masterPassword.padRight(32, '0'));
