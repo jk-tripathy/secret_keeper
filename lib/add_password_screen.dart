@@ -5,16 +5,20 @@ import 'package:secret_keeper/colors.dart';
 
 class AddPasswordScreen extends StatefulWidget {
   final String masterPassword;
+  final int? id;
   final String? site;
   final String? username;
   final String? password;
+  final bool isUpdate;
 
   const AddPasswordScreen({
     super.key,
     required this.masterPassword,
+    this.id,
     this.site,
     this.username,
     this.password,
+    this.isUpdate = false,
   });
 
   @override
@@ -37,6 +41,24 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
       );
 
       await DatabaseHelper().insertPassword(widget.masterPassword, newPassword);
+    }
+  }
+
+  void _updateEntry() async {
+    if (_formKey.currentState!.validate()) {
+      // Create a new Password instance with an id.
+      Password updatedPassword = Password(
+        id: widget.id,
+        site: _siteController.text,
+        username: _usernameController.text,
+        password: _passwordController.text,
+      );
+      print("update id: ${updatedPassword.id}");
+
+      await DatabaseHelper().updatePassword(
+        widget.masterPassword,
+        updatedPassword,
+      );
     }
   }
 
@@ -129,7 +151,11 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                     backgroundColor: context.accent,
                   ),
                   onPressed: () {
-                    _saveEntry();
+                    if (widget.isUpdate) {
+                      _updateEntry();
+                    } else {
+                      _saveEntry();
+                    }
                     Navigator.pop(context, true);
                   },
                   child: Text('Save', style: TextStyle(color: context.white)),

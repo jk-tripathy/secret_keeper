@@ -33,11 +33,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
           IconButton(
             color: context.accent,
             onPressed: () {
-              DatabaseHelper().deletePassword(
-                widget.passwordItem.site,
-                widget.passwordItem.username,
-                widget.passwordItem.password,
-              );
+              DatabaseHelper().deletePassword(widget.passwordItem.id!);
               Navigator.of(context).pop(true);
             },
             icon: Icon(Icons.delete_outline_rounded),
@@ -68,11 +64,6 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                     IconButton(
                       icon: Icon(Icons.edit, color: context.accent),
                       onPressed: () async {
-                        DatabaseHelper().deletePassword(
-                          widget.passwordItem.site,
-                          widget.passwordItem.username,
-                          widget.passwordItem.password,
-                        );
                         final decryptedPassword = widget.passwordItem
                             .decryptPassword(
                               widget.masterPassword,
@@ -84,9 +75,11 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                             builder:
                                 (context) => AddPasswordScreen(
                                   masterPassword: widget.masterPassword,
+                                  id: widget.passwordItem.id,
                                   site: widget.passwordItem.site,
                                   username: widget.passwordItem.username,
                                   password: decryptedPassword,
+                                  isUpdate: true,
                                 ),
                           ),
                         );

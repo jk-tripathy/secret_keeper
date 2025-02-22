@@ -28,7 +28,7 @@ class DatabaseHelper {
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE passwords(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
             site TEXT,
             username TEXT,
             password TEXT
@@ -48,21 +48,25 @@ class DatabaseHelper {
   }
 
   // Function to insert a new password record
-  Future<int> insertPassword(String userPin, Password password) async {
+  Future<int> insertPassword(String masterPassword, Password password) async {
     final db = await database;
-    return await db.insert('passwords', password.toMap(userPin));
+    return await db.insert('passwords', password.toMap(masterPassword));
   }
 
-  Future<int> deletePassword(
-    String site,
-    String username,
-    String encryptedPassword,
-  ) async {
+  Future<int> deletePassword(int id) async {
     final db = await database;
-    return await db.delete(
+    return await db.delete('passwords', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> updatePassword(String masterPassword, Password password) async {
+    print("UPDATE PASSWORD");
+    print(password);
+    final db = await database;
+    return await db.update(
       'passwords',
-      where: 'site = ? AND username = ? AND password = ?',
-      whereArgs: [site, username, encryptedPassword],
+      password.toMap(masterPassword),
+      where: 'id = ?',
+      whereArgs: [password.id],
     );
   }
 }

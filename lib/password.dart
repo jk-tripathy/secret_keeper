@@ -8,11 +8,13 @@ class Password {
   final String site;
   final String username;
   final String password;
+  final int? id;
 
   Password({
     required this.site,
     required this.username,
     required this.password,
+    this.id,
   });
 
   static Future<void> setAndSaveMasterPassword(String masterPassword) async {
@@ -48,6 +50,7 @@ class Password {
   }
 
   factory Password.fromMap(Map<String, dynamic> json) => Password(
+    id: json['id'],
     site: json['site'],
     username: json['username'],
     password: json['password'],
@@ -55,6 +58,6 @@ class Password {
 
   Map<String, dynamic> toMap(String userPin) {
     String encPwd = encryptPassword(userPin, password);
-    return {'site': site, 'username': username, 'password': encPwd};
+    return {'id': id, 'site': site, 'username': username, 'password': encPwd};
   }
 }

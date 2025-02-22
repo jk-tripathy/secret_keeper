@@ -73,6 +73,7 @@ class _HomePageState extends State<HomePage> {
                 final passwordItem = passwords[index];
                 return GestureDetector(
                   onTap: () async {
+                    print('id: ${passwordItem.id}');
                     final res = await Navigator.push(
                       context,
                       MaterialPageRoute(
