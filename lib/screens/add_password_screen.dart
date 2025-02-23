@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:secret_keeper/password.dart';
-import 'package:secret_keeper/database_helper.dart';
-import 'package:secret_keeper/colors.dart';
+import 'package:secret_keeper/models/password.dart';
+import 'package:secret_keeper/services/database_helper.dart';
+import 'package:secret_keeper/constants/colors.dart';
 
 class AddPasswordScreen extends StatefulWidget {
   final String masterPassword;

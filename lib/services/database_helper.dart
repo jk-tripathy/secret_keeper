@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:secret_keeper/password.dart';
+import 'package:secret_keeper/models/password.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {

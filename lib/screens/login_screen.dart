@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:secret_keeper/home_page.dart';
-import 'package:secret_keeper/colors.dart';
+import 'package:secret_keeper/screens/home_page.dart';
+import 'package:secret_keeper/constants/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:secret_keeper/password.dart';
+import 'package:secret_keeper/models/password.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

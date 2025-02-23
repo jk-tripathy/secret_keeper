@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:secret_keeper/add_password_screen.dart';
-import 'package:secret_keeper/colors.dart';
-import 'package:secret_keeper/database_helper.dart';
-import 'package:secret_keeper/login_screen.dart';
-import 'package:secret_keeper/password.dart';
-import 'package:secret_keeper/password_search_delegate.dart';
-import 'package:secret_keeper/show_password_screen.dart';
+import 'package:secret_keeper/screens/add_password_screen.dart';
+import 'package:secret_keeper/constants/colors.dart';
+import 'package:secret_keeper/services/database_helper.dart';
+import 'package:secret_keeper/screens/login_screen.dart';
+import 'package:secret_keeper/models/password.dart';
+import 'package:secret_keeper/screens/password_search_delegate.dart';
+import 'package:secret_keeper/screens/show_password_screen.dart';
 
 class HomePage extends StatefulWidget {
   final String masterPassword;

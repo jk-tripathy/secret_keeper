@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:secret_keeper/password.dart';
-import 'package:secret_keeper/show_password_screen.dart';
-import 'package:secret_keeper/colors.dart';
+import 'package:secret_keeper/models/password.dart';
+import 'package:secret_keeper/screens/show_password_screen.dart';
+import 'package:secret_keeper/constants/colors.dart';
 
 class PasswordSearchDelegate extends SearchDelegate<Password?> {
   final String masterPassword;
