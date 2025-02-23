@@ -16,6 +16,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _masterPasswordController = TextEditingController();
   final _signUpPasswordController1 = TextEditingController();
   final _signUpPasswordController2 = TextEditingController();
+  bool _obscureMasterText = true;
+  bool _obscureSignupText1 = true;
+  bool _obscureSignupText2 = true;
 
   Future<void> checkMasterPasswordSet() async {
     final prefs = await SharedPreferences.getInstance();
@@ -82,10 +85,22 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding: const EdgeInsets.fromLTRB(30, 10, 30, 10),
                             child: TextField(
                               controller: _masterPasswordController,
-                              obscureText: true,
+                              obscureText: _obscureMasterText,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(),
                                 labelText: 'Master Password',
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureMasterText
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureMasterText = !_obscureMasterText;
+                                    });
+                                  },
+                                ),
                               ),
                             ),
                           ),
@@ -109,11 +124,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding: const EdgeInsets.fromLTRB(30, 10, 30, 10),
                             child: TextField(
                               controller: _signUpPasswordController1,
-                              obscureText: true,
+                              obscureText: _obscureSignupText1,
                               decoration: InputDecoration(
                                 fillColor: context.white,
                                 border: OutlineInputBorder(),
                                 labelText: 'Master Password',
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureSignupText1
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureSignupText1 =
+                                          !_obscureSignupText1;
+                                    });
+                                  },
+                                ),
                               ),
                             ),
                           ),
@@ -121,10 +149,23 @@ class _LoginScreenState extends State<LoginScreen> {
                             padding: const EdgeInsets.fromLTRB(30, 10, 30, 10),
                             child: TextField(
                               controller: _signUpPasswordController2,
-                              obscureText: true,
+                              obscureText: _obscureSignupText2,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(),
                                 labelText: 'Confirm Master Password',
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureSignupText2
+                                        ? Icons.visibility
+                                        : Icons.visibility_off,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscureSignupText2 =
+                                          !_obscureSignupText2;
+                                    });
+                                  },
+                                ),
                               ),
                             ),
                           ),
