@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:secret_keeper/screens/home_page.dart';
 import 'package:secret_keeper/constants/colors.dart';
 import 'package:secret_keeper/utils/password_helper.dart';
@@ -19,12 +20,31 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscureMasterText = true;
   bool _obscureSignupText1 = true;
   bool _obscureSignupText2 = true;
+  final LocalAuthentication _localAuthentication = LocalAuthentication();
+  bool _isBiometricAvailable = false;
 
   Future<void> checkMasterPasswordSet() async {
     final prefs = await SharedPreferences.getInstance();
-    return setState(() {
+    setState(() {
       _isMasterPasswordSet = prefs.getBool('isMasterPasswordSet') ?? false;
     });
+
+    if (_isMasterPasswordSet) {
+      PasswordHelper.init();
+      _isBiometricAvailable = await _localAuthentication.canCheckBiometrics;
+      if (_isBiometricAvailable) {
+        final isBiometricEnabled = prefs.getBool('isBiometricEnabled') ?? false;
+        if (isBiometricEnabled) {
+          print("BIOMETRIC ENABLED");
+          final isAuthenticated = await _localAuthentication.authenticate(
+            localizedReason: 'Authenticate to access Secret Keeper',
+          );
+          if (isAuthenticated) {
+            _navigateToHomePage(PasswordHelper.getMasterPassword());
+          }
+        }
+      }
+    }
   }
 
   @override
@@ -228,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => HomePage(masterPassword: masterPassword),
+        builder: (context) => HomePage(unhashedMasterPassword: masterPassword),
       ),
     );
   }

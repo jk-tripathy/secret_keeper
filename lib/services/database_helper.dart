@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:secret_keeper/models/password.dart';
+import 'package:secret_keeper/utils/password_helper.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
@@ -33,8 +34,43 @@ class DatabaseHelper {
     if (oldVersion < 2) {
       await db.execute('''
         ALTER TABLE passwords
-        ADD COLUMN pinned INTEGER DEFAULT 0
+   ADD COLUMN pinned INTEGER DEFAULT 0
       ''');
+    }
+  }
+
+  // DELETE THIS IN NEXT VERSION
+  Future<void> migrateToHashedMasterPassword(String oldMasterPassword) async {
+    final db = await database;
+    if (await db.getVersion() == 3) {
+      print("MIGRATING TO HASHED MASTER PASSWORD");
+      final String newMasterPassword = PasswordHelper.getMasterPassword();
+      final List<Map<String, dynamic>> userData = await db.query('passwords');
+
+      for (final user in userData) {
+        final Password password = Password.fromMap(user);
+        final String decPwd;
+        try {
+          decPwd = PasswordHelper.decryptPassword(
+            oldMasterPassword,
+            password.password,
+          );
+          print("DECRYPTED PASSWORD: $decPwd");
+          print("HASHED MASTER PASSWORD: $newMasterPassword.length");
+          final String encPwd = PasswordHelper.encryptPassword(
+            newMasterPassword,
+            decPwd,
+          );
+          await db.update(
+            'passwords',
+            {'password': encPwd},
+            where: 'id = ?',
+            whereArgs: [password.id],
+          );
+        } catch (e) {
+          return;
+        }
+      }
     }
   }
 
@@ -42,7 +78,7 @@ class DatabaseHelper {
     // Get the directory for the database
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     String path = join(documentsDirectory.path, 'passwords.db');
-    int version = 2;
+    int version = 3;
 
     final db = await openDatabase(
       path,

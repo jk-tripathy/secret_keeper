@@ -7,10 +7,11 @@ import 'package:secret_keeper/models/password.dart';
 import 'package:secret_keeper/screens/password_search_delegate.dart';
 import 'package:secret_keeper/screens/show_password_screen.dart';
 import 'package:secret_keeper/utils/password_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
-  final String masterPassword;
-  const HomePage({super.key, required this.masterPassword});
+  final String unhashedMasterPassword;
+  const HomePage({super.key, required this.unhashedMasterPassword});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -18,15 +19,30 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late Future<List<Password>> passwordsFuture;
+  late bool isBiometricEnabled;
+  late SharedPreferences perfs;
 
   @override
   void initState() {
     super.initState();
+    _setUpBiometric();
     _refreshPasswords();
+  }
+
+  void _setUpBiometric() async {
+    perfs = await SharedPreferences.getInstance();
+    setState(() {
+      isBiometricEnabled = perfs.getBool('isBiometricEnabled') ?? false;
+    });
   }
 
   void _refreshPasswords() {
     setState(() {
+      passwordsFuture = DatabaseHelper().getPasswords();
+      // DELETE THIS IN NEXT VERSION
+      DatabaseHelper().migrateToHashedMasterPassword(
+        widget.unhashedMasterPassword,
+      );
       passwordsFuture = DatabaseHelper().getPasswords();
     });
   }
@@ -53,10 +69,7 @@ class _HomePageState extends State<HomePage> {
                 if (!mounted) return;
                 showSearch(
                   context: context,
-                  delegate: PasswordSearchDelegate(
-                    passwords: list,
-                    masterPassword: widget.masterPassword,
-                  ),
+                  delegate: PasswordSearchDelegate(passwords: list),
                 );
               },
             ),
@@ -113,6 +126,34 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
+                ),
+                child: Card(
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.fingerprint_outlined,
+                      color: context.accent,
+                    ),
+                    title: Text('Biometric Login'),
+                    trailing: Switch(
+                      activeColor: context.accent,
+                      value: isBiometricEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          isBiometricEnabled = value;
+                          perfs.setBool(
+                            'isBiometricEnabled',
+                            isBiometricEnabled,
+                          );
+                        });
+                      },
+                    ),
+                  ),
+                ),
+              ),
               Expanded(child: Container()),
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -166,7 +207,6 @@ class _HomePageState extends State<HomePage> {
                             builder:
                                 (context) => ShowPasswordScreen(
                                   passwordItem: passwordItem,
-                                  masterPassword: widget.masterPassword,
                                 ),
                           ),
                         );
@@ -179,13 +219,15 @@ class _HomePageState extends State<HomePage> {
                             style: TextStyle(color: context.accent),
                           ),
                           trailing: IconButton(
-                            onPressed: () {
+                            onPressed: () async {
+                              final String masterPassword =
+                                  PasswordHelper.getMasterPassword();
                               final updatedPassword = passwordItem.copyWith(
-                                widget.masterPassword,
+                                masterPassword,
                                 pinned: passwordItem.pinned == 1 ? 0 : 1,
                               );
                               DatabaseHelper().updatePassword(
-                                widget.masterPassword,
+                                masterPassword,
                                 updatedPassword,
                               );
 
@@ -212,12 +254,7 @@ class _HomePageState extends State<HomePage> {
           onPressed: () async {
             await Navigator.push(
               context,
-              MaterialPageRoute(
-                builder:
-                    (context) => AddPasswordScreen(
-                      masterPassword: widget.masterPassword,
-                    ),
-              ),
+              MaterialPageRoute(builder: (context) => AddPasswordScreen()),
             );
             _refreshPasswords();
           },

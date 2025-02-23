@@ -7,14 +7,9 @@ import 'package:secret_keeper/models/password.dart';
 import 'package:secret_keeper/utils/password_helper.dart';
 
 class ShowPasswordScreen extends StatefulWidget {
-  final String masterPassword;
   Password passwordItem;
 
-  ShowPasswordScreen({
-    super.key,
-    required this.passwordItem,
-    required this.masterPassword,
-  });
+  ShowPasswordScreen({super.key, required this.passwordItem});
 
   @override
   State<ShowPasswordScreen> createState() => _ShowPasswordScreenState();
@@ -23,6 +18,13 @@ class ShowPasswordScreen extends StatefulWidget {
 class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
   bool _obscurePassword = true;
   String? _decryptedPassword;
+  late String masterPassword;
+
+  @override
+  void initState() {
+    masterPassword = PasswordHelper.getMasterPassword();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +42,6 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                   MaterialPageRoute(
                     builder:
                         (context) => AddPasswordScreen(
-                          masterPassword: widget.masterPassword,
                           passwordItem: widget.passwordItem,
                           isUpdate: true,
                         ),
@@ -82,11 +83,11 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                       IconButton(
                         onPressed: () {
                           final updatedPassword = widget.passwordItem.copyWith(
-                            widget.masterPassword,
+                            masterPassword,
                             pinned: widget.passwordItem.pinned == 1 ? 0 : 1,
                           );
                           DatabaseHelper().updatePassword(
-                            widget.masterPassword,
+                            masterPassword,
                             updatedPassword,
                           );
 
@@ -189,7 +190,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
           onPressed: () async {
             if (_obscurePassword && _decryptedPassword == null) {
               final decrypted = PasswordHelper.decryptPassword(
-                widget.masterPassword,
+                masterPassword,
                 widget.passwordItem.password,
               ); //
               setState(() {

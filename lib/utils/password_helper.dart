@@ -7,12 +7,26 @@ import 'package:secret_keeper/services/database_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PasswordHelper {
+  static String? hashedMasterPassword;
+  static Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    hashedMasterPassword = prefs.getString('masterPassword');
+  }
+
   static Future<void> setAndSaveMasterPassword(String masterPassword) async {
     final prefs = await SharedPreferences.getInstance();
     final hashedMasterPassword =
         sha256.convert(utf8.encode(masterPassword)).toString();
     await prefs.setBool('isMasterPasswordSet', true);
     await prefs.setString('masterPassword', hashedMasterPassword);
+  }
+
+  static String getMasterPassword() {
+    if (hashedMasterPassword == null) {
+      throw Exception('Master password not set');
+    } else {
+      return hashedMasterPassword!;
+    }
   }
 
   static Future<void> clearMasterPassword() async {
@@ -30,7 +44,12 @@ class PasswordHelper {
   }
 
   static String encryptPassword(String masterPassword, String password) {
-    final key = encrypt.Key.fromUtf8(masterPassword.padRight(32, '0'));
+    if (masterPassword.length > 32) {
+      masterPassword = masterPassword.substring(0, 32);
+    } else if (masterPassword.length < 32) {
+      masterPassword = masterPassword.padRight(32, '0');
+    }
+    final key = encrypt.Key.fromUtf8(masterPassword);
     final iv = encrypt.IV.allZerosOfLength(16);
     final encrypter = encrypt.Encrypter(encrypt.AES(key));
     final encrypted = encrypter.encrypt(password, iv: iv).base64.toString();
@@ -38,7 +57,12 @@ class PasswordHelper {
   }
 
   static String decryptPassword(String masterPassword, String password) {
-    final key = encrypt.Key.fromUtf8(masterPassword.padRight(32, '0'));
+    if (masterPassword.length > 32) {
+      masterPassword = masterPassword.substring(0, 32);
+    } else if (masterPassword.length < 32) {
+      masterPassword = masterPassword.padRight(32, '0');
+    }
+    final key = encrypt.Key.fromUtf8(masterPassword);
     final iv = encrypt.IV.allZerosOfLength(16);
     final encrypter = encrypt.Encrypter(encrypt.AES(key));
     final decrypted = encrypter.decrypt64(password, iv: iv);
