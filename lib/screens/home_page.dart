@@ -6,6 +6,7 @@ import 'package:secret_keeper/screens/login_screen.dart';
 import 'package:secret_keeper/models/password.dart';
 import 'package:secret_keeper/screens/password_search_delegate.dart';
 import 'package:secret_keeper/screens/show_password_screen.dart';
+import 'package:secret_keeper/utils/password_helper.dart';
 
 class HomePage extends StatefulWidget {
   final String masterPassword;
@@ -103,7 +104,7 @@ class _HomePageState extends State<HomePage> {
                     leading: Icon(Icons.healing, color: context.accent),
                     title: Text('Fix Master Password'),
                     onTap: () async {
-                      await Password.clearMasterPassword();
+                      await PasswordHelper.clearMasterPassword();
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (context) => LoginScreen()),
@@ -159,7 +160,7 @@ class _HomePageState extends State<HomePage> {
                     final passwordItem = passwords[index];
                     return GestureDetector(
                       onTap: () async {
-                        Navigator.push(
+                        await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder:
@@ -209,8 +210,7 @@ class _HomePageState extends State<HomePage> {
         floatingActionButton: FloatingActionButton(
           backgroundColor: context.accent,
           onPressed: () async {
-            // Add a new password
-            final result = await Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder:
@@ -219,9 +219,7 @@ class _HomePageState extends State<HomePage> {
                     ),
               ),
             );
-            if (result == true) {
-              _refreshPasswords();
-            }
+            _refreshPasswords();
           },
           child: Icon(Icons.add, color: context.white),
         ),

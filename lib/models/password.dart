@@ -1,8 +1,4 @@
-import 'dart:convert';
-
-import 'package:crypto/crypto.dart';
-import 'package:encrypt/encrypt.dart' as encrypt;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:secret_keeper/utils/password_helper.dart';
 
 class Password {
   String site;
@@ -19,44 +15,6 @@ class Password {
     this.pinned = 0,
   });
 
-  static Future<void> setAndSaveMasterPassword(String masterPassword) async {
-    final prefs = await SharedPreferences.getInstance();
-    final hashedMasterPassword =
-        sha256.convert(utf8.encode(masterPassword)).toString();
-    await prefs.setBool('isMasterPasswordSet', true);
-    await prefs.setString('masterPassword', hashedMasterPassword);
-  }
-
-  static Future<void> clearMasterPassword() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isMasterPasswordSet', false);
-    await prefs.remove('masterPassword');
-  }
-
-  static Future<bool> validateMasterPassword(String inputPassword) async {
-    final prefs = await SharedPreferences.getInstance();
-    final hashedMasterPassword = prefs.getString('masterPassword');
-    final hashedInputPassword =
-        sha256.convert(utf8.encode(inputPassword)).toString();
-    return hashedMasterPassword == hashedInputPassword;
-  }
-
-  String encryptPassword(String masterPassword, String password) {
-    final key = encrypt.Key.fromUtf8(masterPassword.padRight(32, '0'));
-    final iv = encrypt.IV.allZerosOfLength(16);
-    final encrypter = encrypt.Encrypter(encrypt.AES(key));
-    final encrypted = encrypter.encrypt(password, iv: iv).base64.toString();
-    return encrypted;
-  }
-
-  String decryptPassword(String masterPassword, String password) {
-    final key = encrypt.Key.fromUtf8(masterPassword.padRight(32, '0'));
-    final iv = encrypt.IV.allZerosOfLength(16);
-    final encrypter = encrypt.Encrypter(encrypt.AES(key));
-    final decrypted = encrypter.decrypt64(password, iv: iv);
-    return decrypted;
-  }
-
   Password copyWith(
     String masterPassword, {
     String? site,
@@ -65,7 +23,10 @@ class Password {
     int? id,
     int? pinned,
   }) {
-    String decPwd = decryptPassword(masterPassword, this.password);
+    String decPwd = PasswordHelper.decryptPassword(
+      masterPassword,
+      this.password,
+    );
     return Password(
       site: site ?? this.site,
       username: username ?? this.username,
@@ -84,7 +45,7 @@ class Password {
   );
 
   Map<String, dynamic> toMap(String userPin) {
-    String encPwd = encryptPassword(userPin, password);
+    String encPwd = PasswordHelper.encryptPassword(userPin, password);
     return {
       'id': id,
       'site': site,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:secret_keeper/screens/home_page.dart';
 import 'package:secret_keeper/constants/colors.dart';
+import 'package:secret_keeper/utils/password_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:secret_keeper/models/password.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -144,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           onPressed: () async {
                             if (_isMasterPasswordSet) {
                               bool isCorrect =
-                                  await Password.validateMasterPassword(
+                                  await PasswordHelper.validateMasterPassword(
                                     _masterPasswordController.text,
                                   );
                               if (isCorrect) {
@@ -156,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
                             } else if (_signUpPasswordController1.text ==
                                 _signUpPasswordController2.text) {
-                              await Password.setAndSaveMasterPassword(
+                              await PasswordHelper.setAndSaveMasterPassword(
                                 _signUpPasswordController1.text,
                               );
                               _navigateToHomePage(

@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:secret_keeper/models/password.dart';
-import 'package:secret_keeper/services/database_helper.dart';
 import 'package:secret_keeper/constants/colors.dart';
+import 'package:secret_keeper/models/password.dart';
+import 'package:secret_keeper/utils/password_helper.dart';
 
 class AddPasswordScreen extends StatefulWidget {
   final String masterPassword;
-  final int? id;
-  final String? site;
-  final String? username;
-  final String? password;
+  final Password? passwordItem;
   final bool isUpdate;
 
   const AddPasswordScreen({
     super.key,
     required this.masterPassword,
-    this.id,
-    this.site,
-    this.username,
-    this.password,
+    this.passwordItem,
     this.isUpdate = false,
   });
 
@@ -27,51 +21,24 @@ class AddPasswordScreen extends StatefulWidget {
 
 class _AddPasswordScreenState extends State<AddPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  bool _obscurePassword = true;
+
   final TextEditingController _siteController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  void _saveEntry() async {
-    if (_formKey.currentState!.validate()) {
-      // Create a new Password instance without an id.
-      Password newPassword = Password(
-        site: _siteController.text,
-        username: _usernameController.text,
-        password: _passwordController.text,
-      );
-
-      await DatabaseHelper().insertPassword(widget.masterPassword, newPassword);
-    }
-  }
-
-  void _updateEntry() async {
-    if (_formKey.currentState!.validate()) {
-      // Create a new Password instance with an id.
-      Password updatedPassword = Password(
-        id: widget.id,
-        site: _siteController.text,
-        username: _usernameController.text,
-        password: _passwordController.text,
-      );
-
-      await DatabaseHelper().updatePassword(
-        widget.masterPassword,
-        updatedPassword,
-      );
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    if (widget.site != null) {
-      _siteController.text = widget.site!;
-    }
-    if (widget.username != null) {
-      _usernameController.text = widget.username!;
-    }
-    if (widget.password != null) {
-      _passwordController.text = widget.password!;
+    if (widget.isUpdate) {
+      final decryptedPassword = PasswordHelper.decryptPassword(
+        widget.masterPassword,
+        widget.passwordItem!.password,
+      );
+
+      _siteController.text = widget.passwordItem!.site;
+      _usernameController.text = widget.passwordItem!.username;
+      _passwordController.text = decryptedPassword;
     }
   }
 
@@ -135,8 +102,20 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                     decoration: InputDecoration(
                       labelText: 'Password',
                       border: OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                     validator:
                         (value) =>
                             value == null || value.isEmpty
@@ -151,9 +130,26 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                   ),
                   onPressed: () {
                     if (widget.isUpdate) {
-                      _updateEntry();
+                      if (_formKey.currentState!.validate()) {
+                        print('Updated Password: $_passwordController.text');
+                        PasswordHelper.updatePassword(
+                          widget.masterPassword,
+                          widget.passwordItem!.id!,
+                          _siteController.text,
+                          _usernameController.text,
+                          _passwordController.text,
+                          widget.passwordItem!.pinned,
+                        );
+                      }
                     } else {
-                      _saveEntry();
+                      if (_formKey.currentState!.validate()) {
+                        PasswordHelper.savePassword(
+                          widget.masterPassword,
+                          _siteController.text,
+                          _usernameController.text,
+                          _passwordController.text,
+                        );
+                      }
                     }
                     Navigator.pop(context, true);
                   },

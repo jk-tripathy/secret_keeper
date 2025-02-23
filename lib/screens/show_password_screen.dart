@@ -4,6 +4,7 @@ import 'package:secret_keeper/screens/add_password_screen.dart';
 import 'package:secret_keeper/constants/colors.dart';
 import 'package:secret_keeper/services/database_helper.dart';
 import 'package:secret_keeper/models/password.dart';
+import 'package:secret_keeper/utils/password_helper.dart';
 
 class ShowPasswordScreen extends StatefulWidget {
   final String masterPassword;
@@ -34,20 +35,13 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
             IconButton(
               icon: Icon(Icons.edit, color: context.accent),
               onPressed: () async {
-                final decryptedPassword = widget.passwordItem.decryptPassword(
-                  widget.masterPassword,
-                  widget.passwordItem.password,
-                );
                 final res = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder:
                         (context) => AddPasswordScreen(
                           masterPassword: widget.masterPassword,
-                          id: widget.passwordItem.id,
-                          site: widget.passwordItem.site,
-                          username: widget.passwordItem.username,
-                          password: decryptedPassword,
+                          passwordItem: widget.passwordItem,
                           isUpdate: true,
                         ),
                   ),
@@ -194,7 +188,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
           ),
           onPressed: () async {
             if (_obscurePassword && _decryptedPassword == null) {
-              final decrypted = widget.passwordItem.decryptPassword(
+              final decrypted = PasswordHelper.decryptPassword(
                 widget.masterPassword,
                 widget.passwordItem.password,
               ); //
