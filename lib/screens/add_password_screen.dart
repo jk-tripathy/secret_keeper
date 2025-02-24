@@ -56,7 +56,10 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
       child: Scaffold(
         backgroundColor: context.lavender,
         appBar: AppBar(
-          title: Text('Add New Password'),
+          title: Text(
+            widget.isUpdate ? 'Update Password' : 'Add Password',
+            style: TextStyle(color: context.accent),
+          ),
           backgroundColor: context.lavender,
         ),
         body: Padding(
@@ -139,6 +142,7 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                           _passwordController.text,
                           widget.passwordItem!.pinned,
                         );
+                        Navigator.pop(context);
                       }
                     } else {
                       if (_formKey.currentState!.validate()) {
@@ -148,11 +152,18 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                           _usernameController.text,
                           _passwordController.text,
                         );
+                        Navigator.pop(context, true);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Please fill all the fields')),
+                        );
                       }
                     }
-                    Navigator.pop(context, true);
                   },
-                  child: Text('Save', style: TextStyle(color: context.white)),
+                  child: Text(
+                    widget.isUpdate ? 'Update' : 'Save',
+                    style: TextStyle(color: context.white),
+                  ),
                 ),
               ],
             ),

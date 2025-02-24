@@ -7,9 +7,9 @@ import 'package:secret_keeper/models/password.dart';
 import 'package:secret_keeper/utils/password_helper.dart';
 
 class ShowPasswordScreen extends StatefulWidget {
-  Password passwordItem;
+  final Password passwordItem;
 
-  ShowPasswordScreen({super.key, required this.passwordItem});
+  const ShowPasswordScreen({super.key, required this.passwordItem});
 
   @override
   State<ShowPasswordScreen> createState() => _ShowPasswordScreenState();
@@ -19,26 +19,35 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
   bool _obscurePassword = true;
   String? _decryptedPassword;
   late String masterPassword;
+  late Password currentPassword;
 
   @override
   void initState() {
     masterPassword = PasswordHelper.getMasterPassword();
+    currentPassword = widget.passwordItem;
     super.initState();
   }
 
   void editPassword() async {
-    print('Edit password');
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder:
             (context) => AddPasswordScreen(
-              passwordItem: widget.passwordItem,
+              passwordItem: currentPassword,
               isUpdate: true,
             ),
       ),
     );
-    Navigator.of(context).pop(true);
+    final updatedPassword = await DatabaseHelper().getPasswordByID(
+      currentPassword.id!,
+    );
+    setState(() {
+      if (updatedPassword != null) {
+        currentPassword = updatedPassword;
+      }
+    });
+    //Navigator.of(context).pop(true);
   }
 
   @override
@@ -58,7 +67,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
             IconButton(
               color: context.accent,
               onPressed: () {
-                DatabaseHelper().deletePassword(widget.passwordItem.id!);
+                DatabaseHelper().deletePassword(currentPassword.id!);
                 Navigator.of(context).pop(true);
               },
               icon: Icon(Icons.delete_outline_rounded),
@@ -82,14 +91,14 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        widget.passwordItem.site,
+                        currentPassword.site,
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
                       IconButton(
                         onPressed: () {
-                          final updatedPassword = widget.passwordItem.copyWith(
+                          final updatedPassword = currentPassword.copyWith(
                             masterPassword,
-                            pinned: widget.passwordItem.pinned == 1 ? 0 : 1,
+                            pinned: currentPassword.pinned == 1 ? 0 : 1,
                           );
                           DatabaseHelper().updatePassword(
                             masterPassword,
@@ -97,11 +106,11 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                           );
 
                           setState(() {
-                            widget.passwordItem.pinned = updatedPassword.pinned;
+                            currentPassword.pinned = updatedPassword.pinned;
                           });
                         },
                         icon: Icon(
-                          widget.passwordItem.pinned == 1
+                          currentPassword.pinned == 1
                               ? Icons.push_pin
                               : Icons.push_pin_outlined,
                           color: context.accent,
@@ -140,7 +149,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
                 ),
               ),
               Text(
-                widget.passwordItem.username,
+                currentPassword.username,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
@@ -153,7 +162,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
           color: context.accent,
           icon: const Icon(Icons.copy, size: 20),
           onPressed:
-              () => _copyToClipboard(widget.passwordItem.username, "Username"),
+              () => _copyToClipboard(currentPassword.username, "Username"),
           tooltip: "Copy Username",
         ),
       ],
@@ -196,7 +205,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
             if (_obscurePassword && _decryptedPassword == null) {
               final decrypted = PasswordHelper.decryptPassword(
                 masterPassword,
-                widget.passwordItem.password,
+                currentPassword.password,
               ); //
               setState(() {
                 _decryptedPassword = decrypted;

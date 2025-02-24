@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:csv/csv.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:secret_keeper/models/password.dart';
@@ -32,8 +33,7 @@ class DatabaseHelper {
   }
 
   void _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 2) {
-    if (oldVersion < newVersion) {
+    if (oldVersion < 3) {
       await db.execute('''
         ALTER TABLE passwords
    ADD COLUMN pinned INTEGER DEFAULT 0
@@ -41,8 +41,6 @@ class DatabaseHelper {
     }
   }
 
-  // DELETE THIS IN NEXT VERSION
-  Future<void> migrateToHashedMasterPassword(String oldMasterPassword) async {
   Future<void> migrateMasterPassword(
     String oldMasterPassword,
     String newMasterPassword,
@@ -95,7 +93,6 @@ class DatabaseHelper {
     return db;
   }
 
-  // Function to fetch all password records
   Future<List<Password>> getPasswords() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('passwords');
@@ -110,6 +107,21 @@ class DatabaseHelper {
       }
     });
     return generatedList;
+  }
+
+  Future<Password?> getPasswordByID(int id) async {
+    final db = await database;
+    final result = await db.query(
+      'passwords',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (result.isNotEmpty) {
+      return Password.fromMap(result.first);
+    } else {
+      return null;
+    }
   }
 
   // Function to insert a new password record
@@ -131,5 +143,26 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [password.id],
     );
+  }
+
+  Future<void> exportDatabaseToCSV() async {
+    final db = await database;
+
+    final List<Map<String, dynamic>> data = await db.query('passwords');
+    List<List<dynamic>> csvData = [
+      data.first.keys.toList(),
+      ...data.map((row) => row.values.toList()),
+    ];
+
+    String csv = const ListToCsvConverter().convert(csvData);
+
+    // Let the user pick a directory
+    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+    if (selectedDirectory == null) {
+      return;
+    }
+
+    final file = File('$selectedDirectory/exported_data.csv');
+    await file.writeAsString(csv);
   }
 }

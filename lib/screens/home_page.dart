@@ -17,7 +17,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late Future<List<Password>> passwordsFuture;
+  late List<Password> passwordsList;
   bool isBiometricEnabled = false;
   late SharedPreferences perfs;
 
@@ -35,9 +35,10 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _refreshPasswords() {
+  void _refreshPasswords() async {
+    final temp = await DatabaseHelper().getPasswords();
     setState(() {
-      passwordsFuture = DatabaseHelper().getPasswords();
+      passwordsList = temp;
     });
   }
 
@@ -58,12 +59,10 @@ class _HomePageState extends State<HomePage> {
           actions: [
             IconButton(
               icon: Icon(Icons.search_rounded, color: context.accent),
-              onPressed: () async {
-                final list = await DatabaseHelper().getPasswords();
-                if (!mounted) return;
+              onPressed: () {
                 showSearch(
                   context: context,
-                  delegate: PasswordSearchDelegate(passwords: list),
+                  delegate: PasswordSearchDelegate(passwords: passwordsList),
                 );
               },
             ),
@@ -75,7 +74,7 @@ class _HomePageState extends State<HomePage> {
             _refreshPasswords();
           },
           child: FutureBuilder<List<Password>>(
-            future: passwordsFuture,
+            future: DatabaseHelper().getPasswords(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());

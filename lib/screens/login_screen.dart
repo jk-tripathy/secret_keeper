@@ -39,10 +39,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (_isMasterPasswordSet) {
       _isBiometricAvailable = await _localAuthentication.canCheckBiometrics;
-      print('Biometric available: $_isBiometricAvailable');
       if (_isBiometricAvailable) {
         isBiometricEnabled = prefs.getBool('isBiometricEnabled') ?? false;
-        print('Biometric enabled: $isBiometricEnabled');
         if (isBiometricEnabled) {
           final isAuthenticated = await _localAuthentication.authenticate(
             localizedReason: 'Authenticate to access Secret Keeper',
