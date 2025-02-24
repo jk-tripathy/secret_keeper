@@ -4,13 +4,11 @@ import 'package:secret_keeper/models/password.dart';
 import 'package:secret_keeper/utils/password_helper.dart';
 
 class AddPasswordScreen extends StatefulWidget {
-  final String masterPassword;
   final Password? passwordItem;
   final bool isUpdate;
 
   const AddPasswordScreen({
     super.key,
-    required this.masterPassword,
     this.passwordItem,
     this.isUpdate = false,
   });
@@ -22,6 +20,7 @@ class AddPasswordScreen extends StatefulWidget {
 class _AddPasswordScreenState extends State<AddPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
+  late String masterPassword;
 
   final TextEditingController _siteController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
@@ -29,10 +28,11 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
 
   @override
   void initState() {
+    masterPassword = PasswordHelper.getMasterPassword();
     super.initState();
     if (widget.isUpdate) {
       final decryptedPassword = PasswordHelper.decryptPassword(
-        widget.masterPassword,
+        masterPassword,
         widget.passwordItem!.password,
       );
 
@@ -131,9 +131,8 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                   onPressed: () {
                     if (widget.isUpdate) {
                       if (_formKey.currentState!.validate()) {
-                        print('Updated Password: $_passwordController.text');
                         PasswordHelper.updatePassword(
-                          widget.masterPassword,
+                          masterPassword,
                           widget.passwordItem!.id!,
                           _siteController.text,
                           _usernameController.text,
@@ -144,7 +143,7 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                     } else {
                       if (_formKey.currentState!.validate()) {
                         PasswordHelper.savePassword(
-                          widget.masterPassword,
+                          masterPassword,
                           _siteController.text,
                           _usernameController.text,
                           _passwordController.text,

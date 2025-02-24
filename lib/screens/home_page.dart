@@ -7,10 +7,10 @@ import 'package:secret_keeper/models/password.dart';
 import 'package:secret_keeper/screens/password_search_delegate.dart';
 import 'package:secret_keeper/screens/show_password_screen.dart';
 import 'package:secret_keeper/utils/password_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
-  final String masterPassword;
-  const HomePage({super.key, required this.masterPassword});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -18,11 +18,21 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late Future<List<Password>> passwordsFuture;
+  bool isBiometricEnabled = false;
+  late SharedPreferences perfs;
 
   @override
   void initState() {
     super.initState();
+    _setUpBiometric();
     _refreshPasswords();
+  }
+
+  void _setUpBiometric() async {
+    perfs = await SharedPreferences.getInstance();
+    setState(() {
+      isBiometricEnabled = perfs.getBool('isBiometricEnabled') ?? false;
+    });
   }
 
   void _refreshPasswords() {
@@ -53,92 +63,13 @@ class _HomePageState extends State<HomePage> {
                 if (!mounted) return;
                 showSearch(
                   context: context,
-                  delegate: PasswordSearchDelegate(
-                    passwords: list,
-                    masterPassword: widget.masterPassword,
-                  ),
+                  delegate: PasswordSearchDelegate(passwords: list),
                 );
               },
             ),
           ],
         ),
-        drawer: Drawer(
-          backgroundColor: context.lavender,
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-
-            children: [
-              DrawerHeader(
-                decoration: BoxDecoration(color: context.accent),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: context.white,
-                      child: Image.asset(
-                        'assets/icon/logo.png',
-                        height: 50,
-                        width: 50,
-                      ),
-                    ),
-                    SizedBox(height: 10, width: double.infinity),
-                    Text(
-                      'Secret Keeper',
-                      style: TextStyle(
-                        color: context.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8.0,
-                  vertical: 4.0,
-                ),
-                child: Card(
-                  child: ListTile(
-                    leading: Icon(Icons.healing, color: context.accent),
-                    title: Text('Fix Master Password'),
-                    onTap: () async {
-                      await PasswordHelper.clearMasterPassword();
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                      );
-                    },
-                  ),
-                ),
-              ),
-              Expanded(child: Container()),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8.0,
-                  vertical: 4.0,
-                ),
-                child: Card(
-                  color: context.accent,
-                  child: ListTile(
-                    leading: Icon(Icons.logout, color: context.white),
-                    title: Text(
-                      'Logout',
-                      style: TextStyle(color: context.white),
-                    ),
-                    onTap: () async {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        drawer: sideDrawer(),
         body: RefreshIndicator(
           onRefresh: () async {
             _refreshPasswords();
@@ -166,40 +97,12 @@ class _HomePageState extends State<HomePage> {
                             builder:
                                 (context) => ShowPasswordScreen(
                                   passwordItem: passwordItem,
-                                  masterPassword: widget.masterPassword,
                                 ),
                           ),
                         );
                         _refreshPasswords();
                       },
-                      child: Card(
-                        child: ListTile(
-                          title: Text(
-                            passwordItem.site,
-                            style: TextStyle(color: context.accent),
-                          ),
-                          trailing: IconButton(
-                            onPressed: () {
-                              final updatedPassword = passwordItem.copyWith(
-                                widget.masterPassword,
-                                pinned: passwordItem.pinned == 1 ? 0 : 1,
-                              );
-                              DatabaseHelper().updatePassword(
-                                widget.masterPassword,
-                                updatedPassword,
-                              );
-
-                              _refreshPasswords();
-                            },
-                            icon: Icon(
-                              passwordItem.pinned == 1
-                                  ? Icons.push_pin
-                                  : Icons.push_pin_outlined,
-                              color: context.accent,
-                            ),
-                          ),
-                        ),
-                      ),
+                      child: passwordCardTile(passwordItem),
                     );
                   },
                 );
@@ -212,16 +115,128 @@ class _HomePageState extends State<HomePage> {
           onPressed: () async {
             await Navigator.push(
               context,
-              MaterialPageRoute(
-                builder:
-                    (context) => AddPasswordScreen(
-                      masterPassword: widget.masterPassword,
-                    ),
-              ),
+              MaterialPageRoute(builder: (context) => AddPasswordScreen()),
             );
             _refreshPasswords();
           },
           child: Icon(Icons.add, color: context.white),
+        ),
+      ),
+    );
+  }
+
+  Widget sideDrawer() {
+    return Drawer(
+      backgroundColor: context.lavender,
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(color: context.accent),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: context.white,
+                  child: Image.asset(
+                    'assets/icon/logo.png',
+                    height: 50,
+                    width: 50,
+                  ),
+                ),
+                SizedBox(height: 10, width: double.infinity),
+                Text(
+                  'Secret Keeper',
+                  style: TextStyle(
+                    color: context.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: Card(
+              child: ListTile(
+                leading: Icon(Icons.healing, color: context.accent),
+                title: Text('Fix Master Password'),
+                onTap: () {
+                  PasswordHelper.clearMasterPassword();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                  );
+                },
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: Card(
+              child: ListTile(
+                leading: Icon(
+                  Icons.fingerprint_outlined,
+                  color: context.accent,
+                ),
+                title: Text('Biometric Login'),
+                trailing: Switch(
+                  activeColor: context.accent,
+                  value: isBiometricEnabled,
+                  onChanged: (value) {
+                    setState(() {
+                      isBiometricEnabled = value;
+                      perfs.setBool('isBiometricEnabled', isBiometricEnabled);
+                    });
+                  },
+                ),
+              ),
+            ),
+          ),
+          Expanded(child: Container()),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: Card(
+              color: context.accent,
+              child: ListTile(
+                leading: Icon(Icons.logout, color: context.white),
+                title: Text('Logout', style: TextStyle(color: context.white)),
+                onTap: () async {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget passwordCardTile(Password passwordItem) {
+    return Card(
+      child: ListTile(
+        title: Text(passwordItem.site, style: TextStyle(color: context.accent)),
+        trailing: IconButton(
+          onPressed: () async {
+            final String masterPassword = PasswordHelper.getMasterPassword();
+            final updatedPassword = passwordItem.copyWith(
+              masterPassword,
+              pinned: passwordItem.pinned == 1 ? 0 : 1,
+            );
+            DatabaseHelper().updatePassword(masterPassword, updatedPassword);
+
+            _refreshPasswords();
+          },
+          icon: Icon(
+            passwordItem.pinned == 1 ? Icons.push_pin : Icons.push_pin_outlined,
+            color: context.accent,
+          ),
         ),
       ),
     );

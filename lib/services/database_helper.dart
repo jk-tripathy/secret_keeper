@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:csv/csv.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:secret_keeper/models/password.dart';
+import 'package:secret_keeper/utils/password_helper.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
@@ -31,10 +33,44 @@ class DatabaseHelper {
 
   void _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
+    if (oldVersion < newVersion) {
       await db.execute('''
         ALTER TABLE passwords
-        ADD COLUMN pinned INTEGER DEFAULT 0
+   ADD COLUMN pinned INTEGER DEFAULT 0
       ''');
+    }
+  }
+
+  // DELETE THIS IN NEXT VERSION
+  Future<void> migrateToHashedMasterPassword(String oldMasterPassword) async {
+  Future<void> migrateMasterPassword(
+    String oldMasterPassword,
+    String newMasterPassword,
+  ) async {
+    final db = await database;
+    final List<Map<String, dynamic>> userData = await db.query('passwords');
+
+    for (final user in userData) {
+      final Password password = Password.fromMap(user);
+      final String decPwd;
+      try {
+        decPwd = PasswordHelper.decryptPassword(
+          oldMasterPassword,
+          password.password,
+        );
+        final String encPwd = PasswordHelper.encryptPassword(
+          newMasterPassword,
+          decPwd,
+        );
+        await db.update(
+          'passwords',
+          {'password': encPwd},
+          where: 'id = ?',
+          whereArgs: [password.id],
+        );
+      } catch (e) {
+        return;
+      }
     }
   }
 
@@ -42,7 +78,7 @@ class DatabaseHelper {
     // Get the directory for the database
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     String path = join(documentsDirectory.path, 'passwords.db');
-    int version = 2;
+    int version = 4;
 
     final db = await openDatabase(
       path,
@@ -50,6 +86,11 @@ class DatabaseHelper {
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
+
+    final res = await db.rawQuery('PRAGMA table_info(passwords)');
+    if (res.any((column) => column['name'] == 'pinned') == false) {
+      _onUpgrade(db, 3, 4);
+    }
 
     return db;
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:secret_keeper/screens/home_page.dart';
 import 'package:secret_keeper/constants/colors.dart';
 import 'package:secret_keeper/utils/password_helper.dart';
@@ -19,18 +20,39 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscureMasterText = true;
   bool _obscureSignupText1 = true;
   bool _obscureSignupText2 = true;
-
-  Future<void> checkMasterPasswordSet() async {
-    final prefs = await SharedPreferences.getInstance();
-    return setState(() {
-      _isMasterPasswordSet = prefs.getBool('isMasterPasswordSet') ?? false;
-    });
-  }
+  final LocalAuthentication _localAuthentication = LocalAuthentication();
+  bool _isBiometricAvailable = false;
+  bool isBiometricEnabled = false;
 
   @override
   void initState() {
     super.initState();
+    PasswordHelper.init();
     checkMasterPasswordSet();
+  }
+
+  Future<void> checkMasterPasswordSet() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isMasterPasswordSet = prefs.getBool('isMasterPasswordSet') ?? false;
+    });
+
+    if (_isMasterPasswordSet) {
+      _isBiometricAvailable = await _localAuthentication.canCheckBiometrics;
+      print('Biometric available: $_isBiometricAvailable');
+      if (_isBiometricAvailable) {
+        isBiometricEnabled = prefs.getBool('isBiometricEnabled') ?? false;
+        print('Biometric enabled: $isBiometricEnabled');
+        if (isBiometricEnabled) {
+          final isAuthenticated = await _localAuthentication.authenticate(
+            localizedReason: 'Authenticate to access Secret Keeper',
+          );
+          if (isAuthenticated) {
+            _navigateToHomePage();
+          }
+        }
+      }
+    }
   }
 
   @override
@@ -189,20 +211,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                     _masterPasswordController.text,
                                   );
                               if (isCorrect) {
-                                _navigateToHomePage(
-                                  _masterPasswordController.text,
-                                );
+                                _navigateToHomePage();
                               } else {
                                 _showSnackBar('Incorrect Master Password.');
                               }
                             } else if (_signUpPasswordController1.text ==
                                 _signUpPasswordController2.text) {
-                              await PasswordHelper.setAndSaveMasterPassword(
+                              PasswordHelper.setAndSaveMasterPassword(
                                 _signUpPasswordController1.text,
                               );
-                              _navigateToHomePage(
-                                _signUpPasswordController1.text,
-                              );
+                              _navigateToHomePage();
                             } else {
                               _showSnackBar('Passwords do not match.');
                             }
@@ -224,12 +242,10 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _navigateToHomePage(String masterPassword) {
+  void _navigateToHomePage() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (context) => HomePage(masterPassword: masterPassword),
-      ),
+      MaterialPageRoute(builder: (context) => HomePage()),
     );
   }
 
