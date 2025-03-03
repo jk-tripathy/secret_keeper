@@ -2,6 +2,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis_auth/googleapis_auth.dart' as auth;
 import 'package:http/http.dart' as http;
 import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:path_provider/path_provider.dart';
 
 class GdriveHelper {
   static final GoogleSignIn googleSignIn = GoogleSignIn(
@@ -12,8 +13,11 @@ class GdriveHelper {
   // static Map<String, String> headers = {};
 
   static Future<void> signIn() async {
+    googleUser = await googleSignIn.signIn();
+  }
+
+  static Future<void> signInSilently() async {
     googleUser = await googleSignIn.signInSilently();
-    googleUser ??= await googleSignIn.signIn();
   }
 
   static Future<void> signOut() async {
@@ -39,10 +43,6 @@ class GdriveHelper {
       throw Exception('Failed to authenticate with Google');
     }
     return drive.DriveApi(authClient!);
-  }
-
-  static Future<void> init() async {
-    signIn();
   }
 
   static Future<void> uploadFile() async {

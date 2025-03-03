@@ -43,6 +43,10 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       isGoogleSyncEnabled = perfs.getBool('isGoogleSyncEnabled') ?? false;
     });
+
+    if (isGoogleSyncEnabled) {
+      await GdriveHelper.signInSilently();
+    }
   }
 
   void _refreshPasswords() async {
@@ -235,21 +239,9 @@ class _HomePageState extends State<HomePage> {
                       perfs.setBool('isGoogleSyncEnabled', isGoogleSyncEnabled);
                     });
                     if (value) {
-                      await GdriveHelper.init();
+                      await GdriveHelper.signIn();
                     } else {
                       await GdriveHelper.signOut();
-                      AlertDialog(
-                        title: Text('Google Sync'),
-                        content: Text('Sign out successful'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: Text('OK'),
-                          ),
-                        ],
-                      );
                     }
                   },
                 ),
