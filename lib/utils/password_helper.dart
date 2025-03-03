@@ -20,6 +20,9 @@ class PasswordHelper {
     if (prefs!.getBool('isBiometricEnabled') == null) {
       await prefs!.setBool('isBiometricEnabled', false);
     }
+    if (prefs!.getBool('isGoogleSyncEnabled') == null) {
+      await prefs!.setBool('isGoogleSyncEnabled', false);
+    }
     hashedMasterPassword = prefs!.getString('masterPassword') ?? '';
   }
 

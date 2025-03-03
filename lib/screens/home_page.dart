@@ -6,6 +6,7 @@ import 'package:secret_keeper/screens/login_screen.dart';
 import 'package:secret_keeper/models/password.dart';
 import 'package:secret_keeper/screens/password_search_delegate.dart';
 import 'package:secret_keeper/screens/show_password_screen.dart';
+import 'package:secret_keeper/services/gdrive_helper.dart';
 import 'package:secret_keeper/utils/password_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,12 +20,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late List<Password> passwordsList;
   bool isBiometricEnabled = false;
+  bool isGoogleSyncEnabled = false;
   late SharedPreferences perfs;
 
   @override
   void initState() {
     super.initState();
     _setUpBiometric();
+    _setUpGoogleSync();
     _refreshPasswords();
   }
 
@@ -32,6 +35,13 @@ class _HomePageState extends State<HomePage> {
     perfs = await SharedPreferences.getInstance();
     setState(() {
       isBiometricEnabled = perfs.getBool('isBiometricEnabled') ?? false;
+    });
+  }
+
+  void _setUpGoogleSync() async {
+    perfs = await SharedPreferences.getInstance();
+    setState(() {
+      isGoogleSyncEnabled = perfs.getBool('isGoogleSyncEnabled') ?? false;
     });
   }
 
@@ -177,6 +187,18 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: Card(
               child: ListTile(
+                leading: Icon(Icons.healing, color: context.accent),
+                title: Text('Test Drive'),
+                onTap: () {
+                  GdriveHelper.uploadFile();
+                },
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: Card(
+              child: ListTile(
                 leading: Icon(
                   Icons.fingerprint_outlined,
                   color: context.accent,
@@ -190,6 +212,45 @@ class _HomePageState extends State<HomePage> {
                       isBiometricEnabled = value;
                       perfs.setBool('isBiometricEnabled', isBiometricEnabled);
                     });
+                  },
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            child: Card(
+              child: ListTile(
+                leading: Icon(
+                  Icons.drive_folder_upload_outlined,
+                  color: context.accent,
+                ),
+                title: Text('Google Sync'),
+                trailing: Switch(
+                  activeColor: context.accent,
+                  value: isGoogleSyncEnabled,
+                  onChanged: (value) async {
+                    setState(() {
+                      isGoogleSyncEnabled = value;
+                      perfs.setBool('isGoogleSyncEnabled', isGoogleSyncEnabled);
+                    });
+                    if (value) {
+                      await GdriveHelper.init();
+                    } else {
+                      await GdriveHelper.signOut();
+                      AlertDialog(
+                        title: Text('Google Sync'),
+                        content: Text('Sign out successful'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: Text('OK'),
+                          ),
+                        ],
+                      );
+                    }
                   },
                 ),
               ),
