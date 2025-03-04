@@ -152,6 +152,7 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                           _usernameController.text,
                           _passwordController.text,
                         );
+
                         Navigator.pop(context, true);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(

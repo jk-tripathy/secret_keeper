@@ -46,6 +46,10 @@ class _HomePageState extends State<HomePage> {
 
     if (isGoogleSyncEnabled) {
       await GdriveHelper.signInSilently();
+      final res = await GdriveHelper.checkMetadata();
+      if (res) {
+        await GdriveHelper.restoreBackup();
+      }
     }
   }
 
@@ -191,18 +195,6 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: Card(
               child: ListTile(
-                leading: Icon(Icons.healing, color: context.accent),
-                title: Text('Test Drive'),
-                onTap: () {
-                  GdriveHelper.uploadFile();
-                },
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            child: Card(
-              child: ListTile(
                 leading: Icon(
                   Icons.fingerprint_outlined,
                   color: context.accent,
@@ -225,10 +217,7 @@ class _HomePageState extends State<HomePage> {
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: Card(
               child: ListTile(
-                leading: Icon(
-                  Icons.drive_folder_upload_outlined,
-                  color: context.accent,
-                ),
+                leading: Icon(Icons.sync_outlined, color: context.accent),
                 title: Text('Google Sync'),
                 trailing: Switch(
                   activeColor: context.accent,
@@ -240,6 +229,12 @@ class _HomePageState extends State<HomePage> {
                     });
                     if (value) {
                       await GdriveHelper.signIn();
+                      if (passwordsList.isNotEmpty) {
+                        await GdriveHelper.uploadBackup(init: true);
+                      } else {
+                        await GdriveHelper.restoreBackup();
+                        _refreshPasswords();
+                      }
                     } else {
                       await GdriveHelper.signOut();
                     }

@@ -1,14 +1,15 @@
 import 'dart:io';
-import 'package:csv/csv.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:secret_keeper/models/password.dart';
+import 'package:secret_keeper/services/gdrive_helper.dart';
 import 'package:secret_keeper/utils/password_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
+  static SharedPreferences? prefs;
   factory DatabaseHelper() => _instance;
   DatabaseHelper._internal();
 
@@ -33,7 +34,7 @@ class DatabaseHelper {
   }
 
   void _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 3) {
+    if (oldVersion < 4) {
       await db.execute('''
         ALTER TABLE passwords
    ADD COLUMN pinned INTEGER DEFAULT 0
@@ -73,8 +74,9 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    // Get the directory for the database
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    prefs = await SharedPreferences.getInstance();
+    final Directory documentsDirectory =
+        await getApplicationDocumentsDirectory();
     String path = join(documentsDirectory.path, 'passwords.db');
     int version = 4;
 
@@ -127,42 +129,36 @@ class DatabaseHelper {
   // Function to insert a new password record
   Future<int> insertPassword(String masterPassword, Password password) async {
     final db = await database;
-    return await db.insert('passwords', password.toMap(masterPassword));
+    final res = await db.insert('passwords', password.toMap(masterPassword));
+    final isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
+    if (res != 0 && isGoogleSyncEnabled!) {
+      GdriveHelper.uploadBackup();
+    }
+    return res;
   }
 
   Future<int> deletePassword(int id) async {
     final db = await database;
-    return await db.delete('passwords', where: 'id = ?', whereArgs: [id]);
+    final res = await db.delete('passwords', where: 'id = ?', whereArgs: [id]);
+    final isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
+    if (res != 0 && isGoogleSyncEnabled!) {
+      GdriveHelper.uploadBackup();
+    }
+    return res;
   }
 
   Future<int> updatePassword(String masterPassword, Password password) async {
     final db = await database;
-    return await db.update(
+    final res = await db.update(
       'passwords',
       password.toMap(masterPassword),
       where: 'id = ?',
       whereArgs: [password.id],
     );
-  }
-
-  Future<void> exportDatabaseToCSV() async {
-    final db = await database;
-
-    final List<Map<String, dynamic>> data = await db.query('passwords');
-    List<List<dynamic>> csvData = [
-      data.first.keys.toList(),
-      ...data.map((row) => row.values.toList()),
-    ];
-
-    String csv = const ListToCsvConverter().convert(csvData);
-
-    // Let the user pick a directory
-    String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
-    if (selectedDirectory == null) {
-      return;
+    final isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
+    if (res != 0 && isGoogleSyncEnabled!) {
+      GdriveHelper.uploadBackup();
     }
-
-    final file = File('$selectedDirectory/exported_data.csv');
-    await file.writeAsString(csv);
+    return res;
   }
 }
