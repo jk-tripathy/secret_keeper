@@ -119,13 +119,23 @@ class GdriveHelper {
     return (null, null);
   }
 
+  static bool isLocalNewer(String localTimestamp, String cloudTimestamp) {
+    DateTime localTime = DateTime.parse(localTimestamp);
+    DateTime cloudTime = DateTime.parse(cloudTimestamp);
+    return localTime.isAfter(cloudTime);
+  }
+
   static Future<bool> checkMetadata() async {
     final drive.DriveApi driveClient = await getDriveClient();
     final (metadataJson, _) = await getMetadata(driveClient);
-    final curHash = await computeFileHash(await getDatabasePath());
+    final dbPath = await getDatabasePath();
+    final dbFile = File(dbPath);
+    final locHash = await computeFileHash(dbPath);
+    final locUpdatedAt = dbFile.lastModifiedSync().toIso8601String();
     if (metadataJson != null) {
-      final newHash = metadataJson["hash"];
-      if (curHash != newHash) {
+      final cloudHash = metadataJson["hash"];
+      final cloudUpdatedAt = metadataJson["updated_at"];
+      if (cloudHash != locHash && isLocalNewer(cloudUpdatedAt, locUpdatedAt)) {
         return true;
       }
     }
@@ -170,7 +180,10 @@ class GdriveHelper {
     var metadata = drive.File();
     metadata.name = "backup_metadata.json";
     metadata.parents = [folderId];
-    final metadataContent = jsonEncode({"hash": newHash});
+    final metadataContent = jsonEncode({
+      "hash": newHash,
+      "updated_at": DateTime.now().toIso8601String(),
+    });
     final metadataMedia = drive.Media(
       Stream.value(utf8.encode(metadataContent)),
       metadataContent.length,

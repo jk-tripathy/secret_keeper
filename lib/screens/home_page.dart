@@ -47,7 +47,7 @@ class _HomePageState extends State<HomePage> {
     if (isGoogleSyncEnabled) {
       await GdriveHelper.signInSilently();
       final res = await GdriveHelper.checkMetadata();
-      if (res) {
+      if (res && passwordsList.isNotEmpty) {
         await GdriveHelper.restoreBackup();
       }
     }
