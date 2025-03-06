@@ -51,6 +51,7 @@ class _HomePageState extends State<HomePage> {
         await GdriveHelper.restoreBackup();
       }
     }
+    _refreshPasswords();
   }
 
   void _refreshPasswords() async {
