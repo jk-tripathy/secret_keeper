@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:secret_keeper/screens/add_password_screen.dart';
 import 'package:secret_keeper/constants/colors.dart';
@@ -87,14 +85,12 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-            Platform.isWindows
-                ? IconButton(
-                  icon: Icon(Icons.refresh_outlined, color: context.accent),
-                  onPressed: () {
-                    _refreshPasswords();
-                  },
-                )
-                : SizedBox.shrink(),
+            IconButton(
+              icon: Icon(Icons.refresh_outlined, color: context.accent),
+              onPressed: () {
+                _refreshPasswords();
+              },
+            ),
           ],
         ),
         drawer: sideDrawer(),

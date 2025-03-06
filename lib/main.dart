@@ -4,8 +4,6 @@ import 'package:secret_keeper/screens/login_screen.dart';
 
 void main() async {
   await dotenv.load();
-  print(dotenv.env['clientID']);
-  print(dotenv.env['clientSecret']);
   runApp(const MyApp());
 }
 

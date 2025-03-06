@@ -3,55 +3,87 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart';
+import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart'
+    as desktop;
+import 'package:google_sign_in/google_sign_in.dart' as mobile;
+import 'package:googleapis_auth/googleapis_auth.dart' as auth;
 import 'package:http/http.dart' as http;
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:path_provider/path_provider.dart';
 
 class GdriveHelper {
-  static final GoogleSignIn googleSignIn = GoogleSignIn(
-    params: GoogleSignInParams(
-      clientId:
-          "349665046436-soifv22hqcar5mcm712tamb2m83gloc8.apps.googleusercontent.com",
-      clientSecret: dotenv.env["clientSecret"],
-      redirectPort: 42069,
-      scopes: ['https://www.googleapis.com/auth/drive.file'],
-    ),
-  );
-  static http.Client? authClient;
+  static desktop.GoogleSignIn? desktopSignIn;
+  static mobile.GoogleSignIn? mobileSignIn;
+  static mobile.GoogleSignInAccount? mobileUser;
+
+  static void init() {
+    if (Platform.isAndroid || Platform.isIOS) {
+      mobileSignIn = mobile.GoogleSignIn(
+        scopes: ['https://www.googleapis.com/auth/drive.file'],
+      );
+    } else {
+      desktopSignIn = desktop.GoogleSignIn(
+        params: desktop.GoogleSignInParams(
+          clientId:
+              "349665046436-soifv22hqcar5mcm712tamb2m83gloc8.apps.googleusercontent.com",
+          clientSecret: dotenv.env["clientSecret"],
+          redirectPort: 42069,
+          scopes: ['https://www.googleapis.com/auth/drive.file'],
+        ),
+      );
+    }
+  }
 
   static Future<void> signIn() async {
-    await googleSignIn.signInOnline();
+    init();
+    if (Platform.isAndroid || Platform.isIOS) {
+      mobileUser = await mobileSignIn!.signIn();
+    } else {
+      await desktopSignIn!.signIn();
+    }
   }
 
   static Future<void> signInSilently() async {
-    await googleSignIn.signInOffline();
+    init();
+    if (Platform.isAndroid || Platform.isIOS) {
+      mobileUser = await mobileSignIn!.signInSilently();
+    } else {
+      await desktopSignIn!.signInOffline();
+    }
   }
 
   static Future<void> signOut() async {
-    await googleSignIn.signOut();
+    if (Platform.isAndroid || Platform.isIOS) {
+      await mobileSignIn!.disconnect();
+    } else {
+      await desktopSignIn!.signOut();
+    }
   }
 
   static Future<drive.DriveApi> getDriveClient() async {
-    //final GoogleSignInAuthentication googleAuth =
-    //    await googleUser!.authentication;
-    //authClient = auth.authenticatedClient(
-    //  http.Client(),
-    //  auth.AccessCredentials(
-    //    auth.AccessToken(
-    //      'Bearer',
-    //      googleAuth.accessToken!,
-    //      DateTime.now().toUtc(),
-    //    ),
-    //    null,
-    //    ['https://www.googleapis.com/auth/drive.file'],
-    //  ),
-    //);
-    authClient = await googleSignIn.authenticatedClient;
-    if (authClient == null) {
-      throw Exception('Failed to authenticate with Google');
+    if (Platform.isAndroid || Platform.isIOS) {
+      final mobile.GoogleSignInAuthentication googleAuth =
+          await mobileUser!.authentication;
+      final auth.AuthClient authClient = auth.authenticatedClient(
+        http.Client(),
+        auth.AccessCredentials(
+          auth.AccessToken(
+            'Bearer',
+            googleAuth.accessToken!,
+            DateTime.now().toUtc(),
+          ),
+          null,
+          ['https://www.googleapis.com/auth/drive.file'],
+        ),
+      );
+      return drive.DriveApi(authClient);
+    } else {
+      http.Client? authClient = await desktopSignIn!.authenticatedClient;
+      if (authClient == null) {
+        throw Exception('Failed to authenticate with Google');
+      }
+      return drive.DriveApi(authClient);
     }
-    return drive.DriveApi(authClient!);
   }
 
   static Future<String> computeFileHash(String filePath) async {
