@@ -2,46 +2,52 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:googleapis_auth/googleapis_auth.dart' as auth;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart';
 import 'package:http/http.dart' as http;
 import 'package:googleapis/drive/v3.dart' as drive;
 import 'package:path_provider/path_provider.dart';
 
 class GdriveHelper {
   static final GoogleSignIn googleSignIn = GoogleSignIn(
-    scopes: ['https://www.googleapis.com/auth/drive.file'],
+    params: GoogleSignInParams(
+      clientId:
+          "349665046436-soifv22hqcar5mcm712tamb2m83gloc8.apps.googleusercontent.com",
+      clientSecret: dotenv.env["clientSecret"],
+      redirectPort: 42069,
+      scopes: ['https://www.googleapis.com/auth/drive.file'],
+    ),
   );
-  static GoogleSignInAccount? googleUser;
-  static auth.AuthClient? authClient;
+  static http.Client? authClient;
 
   static Future<void> signIn() async {
-    googleUser = await googleSignIn.signIn();
+    await googleSignIn.signInOnline();
   }
 
   static Future<void> signInSilently() async {
-    googleUser = await googleSignIn.signInSilently();
+    await googleSignIn.signInOffline();
   }
 
   static Future<void> signOut() async {
-    await googleSignIn.disconnect();
+    await googleSignIn.signOut();
   }
 
   static Future<drive.DriveApi> getDriveClient() async {
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser!.authentication;
-    authClient = auth.authenticatedClient(
-      http.Client(),
-      auth.AccessCredentials(
-        auth.AccessToken(
-          'Bearer',
-          googleAuth.accessToken!,
-          DateTime.now().toUtc(),
-        ),
-        null,
-        ['https://www.googleapis.com/auth/drive.file'],
-      ),
-    );
+    //final GoogleSignInAuthentication googleAuth =
+    //    await googleUser!.authentication;
+    //authClient = auth.authenticatedClient(
+    //  http.Client(),
+    //  auth.AccessCredentials(
+    //    auth.AccessToken(
+    //      'Bearer',
+    //      googleAuth.accessToken!,
+    //      DateTime.now().toUtc(),
+    //    ),
+    //    null,
+    //    ['https://www.googleapis.com/auth/drive.file'],
+    //  ),
+    //);
+    authClient = await googleSignIn.authenticatedClient;
     if (authClient == null) {
       throw Exception('Failed to authenticate with Google');
     }

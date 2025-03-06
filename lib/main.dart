@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:secret_keeper/screens/login_screen.dart';
 
-void main() {
+void main() async {
+  await dotenv.load();
+  print(dotenv.env['clientID']);
+  print(dotenv.env['clientSecret']);
   runApp(const MyApp());
 }
 

@@ -5,7 +5,7 @@ import 'package:secret_keeper/models/password.dart';
 import 'package:secret_keeper/services/gdrive_helper.dart';
 import 'package:secret_keeper/utils/password_helper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -79,6 +79,11 @@ class DatabaseHelper {
         await getApplicationDocumentsDirectory();
     String path = join(documentsDirectory.path, 'passwords.db');
     int version = 4;
+
+    if (Platform.isWindows) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
 
     final db = await openDatabase(
       path,
