@@ -54,7 +54,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _refreshPasswords() async {
-    await GdriveHelper.restoreBackup();
     final temp = await DatabaseHelper().getPasswords();
     setState(() {
       passwordsList = temp;
@@ -85,12 +84,15 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-            IconButton(
-              icon: Icon(Icons.refresh_outlined, color: context.accent),
-              onPressed: () {
-                _refreshPasswords();
-              },
-            ),
+            isGoogleSyncEnabled
+                ? IconButton(
+                  icon: Icon(Icons.sync_outlined, color: context.accent),
+                  onPressed: () async {
+                    await GdriveHelper.restoreBackup();
+                    _refreshPasswords();
+                  },
+                )
+                : SizedBox.shrink(),
           ],
         ),
         drawer: sideDrawer(),
