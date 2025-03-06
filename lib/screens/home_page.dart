@@ -200,28 +200,36 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            child: Card(
-              child: ListTile(
-                leading: Icon(
-                  Icons.fingerprint_outlined,
-                  color: context.accent,
+          isBiometricEnabled
+              ? Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
                 ),
-                title: Text('Biometric Login'),
-                trailing: Switch(
-                  activeColor: context.accent,
-                  value: isBiometricEnabled,
-                  onChanged: (value) {
-                    setState(() {
-                      isBiometricEnabled = value;
-                      perfs.setBool('isBiometricEnabled', isBiometricEnabled);
-                    });
-                  },
+                child: Card(
+                  child: ListTile(
+                    leading: Icon(
+                      Icons.fingerprint_outlined,
+                      color: context.accent,
+                    ),
+                    title: Text('Biometric Login'),
+                    trailing: Switch(
+                      activeColor: context.accent,
+                      value: isBiometricEnabled,
+                      onChanged: (value) {
+                        setState(() {
+                          isBiometricEnabled = value;
+                          perfs.setBool(
+                            'isBiometricEnabled',
+                            isBiometricEnabled,
+                          );
+                        });
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
+              )
+              : SizedBox.shrink(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             child: Card(

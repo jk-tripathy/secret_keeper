@@ -137,7 +137,7 @@ class DatabaseHelper {
     final res = await db.insert('passwords', password.toMap(masterPassword));
     final isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
     if (res != 0 && isGoogleSyncEnabled!) {
-      GdriveHelper.uploadBackup();
+      await GdriveHelper.uploadBackup();
     }
     return res;
   }
@@ -147,7 +147,7 @@ class DatabaseHelper {
     final res = await db.delete('passwords', where: 'id = ?', whereArgs: [id]);
     final isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
     if (res != 0 && isGoogleSyncEnabled!) {
-      GdriveHelper.uploadBackup();
+      await GdriveHelper.uploadBackup();
     }
     return res;
   }
@@ -162,7 +162,7 @@ class DatabaseHelper {
     );
     final isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
     if (res != 0 && isGoogleSyncEnabled!) {
-      GdriveHelper.uploadBackup();
+      await GdriveHelper.uploadBackup();
     }
     return res;
   }
