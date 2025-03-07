@@ -20,6 +20,7 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
   String? _decryptedPassword;
   late String masterPassword;
   late Password currentPassword;
+  bool isProcessing = false;
 
   @override
   void initState() {
@@ -50,6 +51,17 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
     //Navigator.of(context).pop(true);
   }
 
+  void deletePassword() async {
+    setState(() {
+      isProcessing = true;
+    });
+    await DatabaseHelper().deletePassword(currentPassword.id!);
+    setState(() {
+      isProcessing = false;
+    });
+    Navigator.of(context).pop(true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -67,66 +79,97 @@ class _ShowPasswordScreenState extends State<ShowPasswordScreen> {
             IconButton(
               color: context.accent,
               onPressed: () {
-                DatabaseHelper().deletePassword(currentPassword.id!);
-                Navigator.of(context).pop(true);
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text("Delete Password"),
+                      content: const Text(
+                        "Are you sure you want to delete this password?",
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text("Cancel"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            deletePassword();
+                          },
+                          child: const Text("Delete"),
+                        ),
+                      ],
+                    );
+                  },
+                );
               },
               icon: Icon(Icons.delete_outline_rounded),
             ),
           ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Card(
-            elevation: 5,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        currentPassword.site,
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          final updatedPassword = currentPassword.copyWith(
-                            masterPassword,
-                            pinned: currentPassword.pinned == 1 ? 0 : 1,
-                          );
-                          DatabaseHelper().updatePassword(
-                            masterPassword,
-                            updatedPassword,
-                          );
+        body:
+            isProcessing
+                ? const Center(child: CircularProgressIndicator())
+                : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Card(
+                    elevation: 5,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                currentPassword.site,
+                                style:
+                                    Theme.of(context).textTheme.headlineMedium,
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  final updatedPassword = currentPassword
+                                      .copyWith(
+                                        masterPassword,
+                                        pinned:
+                                            currentPassword.pinned == 1 ? 0 : 1,
+                                      );
+                                  DatabaseHelper().updatePassword(
+                                    masterPassword,
+                                    updatedPassword,
+                                  );
 
-                          setState(() {
-                            currentPassword.pinned = updatedPassword.pinned;
-                          });
-                        },
-                        icon: Icon(
-                          currentPassword.pinned == 1
-                              ? Icons.push_pin
-                              : Icons.push_pin_outlined,
-                          color: context.accent,
-                        ),
+                                  setState(() {
+                                    currentPassword.pinned =
+                                        updatedPassword.pinned;
+                                  });
+                                },
+                                icon: Icon(
+                                  currentPassword.pinned == 1
+                                      ? Icons.push_pin
+                                      : Icons.push_pin_outlined,
+                                  color: context.accent,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          _buildUsernameRow(),
+                          const SizedBox(height: 16),
+                          _buildPasswordRow(),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                  _buildUsernameRow(),
-                  const SizedBox(height: 16),
-                  _buildPasswordRow(),
-                ],
-              ),
-            ),
-          ),
-        ),
+                ),
       ),
     );
   }

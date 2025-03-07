@@ -22,6 +22,7 @@ class _HomePageState extends State<HomePage> {
   bool isBiometricEnabled = false;
   bool isGoogleSyncEnabled = false;
   late SharedPreferences perfs;
+  bool isProcessing = false;
 
   @override
   void initState() {
@@ -46,18 +47,18 @@ class _HomePageState extends State<HomePage> {
 
     if (isGoogleSyncEnabled) {
       await GdriveHelper.signInSilently();
-      final res = await GdriveHelper.checkMetadata();
-      if (res && passwordsList.isNotEmpty) {
-        await GdriveHelper.restoreBackup();
-      }
     }
     _refreshPasswords();
   }
 
   void _refreshPasswords() async {
+    setState(() {
+      isProcessing = true;
+    });
     final temp = await DatabaseHelper().getPasswords();
     setState(() {
       passwordsList = temp;
+      isProcessing = false;
     });
   }
 
@@ -89,7 +90,6 @@ class _HomePageState extends State<HomePage> {
                 ? IconButton(
                   icon: Icon(Icons.sync_outlined, color: context.accent),
                   onPressed: () async {
-                    await GdriveHelper.restoreBackup();
                     _refreshPasswords();
                   },
                 )
@@ -97,46 +97,49 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         drawer: sideDrawer(),
-        body: RefreshIndicator(
-          onRefresh: () async {
-            _refreshPasswords();
-          },
-          child: FutureBuilder<List<Password>>(
-            future: DatabaseHelper().getPasswords(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Center(child: Text('No passwords found.'));
-              } else {
-                final passwords = snapshot.data!;
-                return ListView.builder(
-                  itemCount: passwords.length,
-                  itemBuilder: (context, index) {
-                    final passwordItem = passwords[index];
-                    return GestureDetector(
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => ShowPasswordScreen(
-                                  passwordItem: passwordItem,
-                                ),
-                          ),
-                        );
-                        _refreshPasswords();
-                      },
-                      child: passwordCardTile(passwordItem),
-                    );
+        body:
+            isProcessing
+                ? Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                  onRefresh: () async {
+                    _refreshPasswords();
                   },
-                );
-              }
-            },
-          ),
-        ),
+                  child: FutureBuilder<List<Password>>(
+                    future: DatabaseHelper().getPasswords(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(child: Text('No passwords found.'));
+                      } else {
+                        final passwords = snapshot.data!;
+                        return ListView.builder(
+                          itemCount: passwords.length,
+                          itemBuilder: (context, index) {
+                            final passwordItem = passwords[index];
+                            return GestureDetector(
+                              onTap: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => ShowPasswordScreen(
+                                          passwordItem: passwordItem,
+                                        ),
+                                  ),
+                                );
+                                _refreshPasswords();
+                              },
+                              child: passwordCardTile(passwordItem),
+                            );
+                          },
+                        );
+                      }
+                    },
+                  ),
+                ),
         floatingActionButton: FloatingActionButton(
           backgroundColor: context.accent,
           onPressed: () async {
@@ -247,12 +250,6 @@ class _HomePageState extends State<HomePage> {
                     });
                     if (value) {
                       await GdriveHelper.signIn();
-                      if (passwordsList.isNotEmpty) {
-                        await GdriveHelper.uploadBackup(init: true);
-                      } else {
-                        await GdriveHelper.restoreBackup();
-                        _refreshPasswords();
-                      }
                     } else {
                       await GdriveHelper.signOut();
                     }
@@ -294,7 +291,17 @@ class _HomePageState extends State<HomePage> {
               masterPassword,
               pinned: passwordItem.pinned == 1 ? 0 : 1,
             );
-            DatabaseHelper().updatePassword(masterPassword, updatedPassword);
+            setState(() {
+              isProcessing = true;
+            });
+            await DatabaseHelper().updatePassword(
+              masterPassword,
+              updatedPassword,
+            );
+
+            setState(() {
+              isProcessing = false;
+            });
 
             _refreshPasswords();
           },

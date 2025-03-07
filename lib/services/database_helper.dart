@@ -10,8 +10,10 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static SharedPreferences? prefs;
+  static bool? isGoogleSyncEnabled;
   factory DatabaseHelper() => _instance;
   DatabaseHelper._internal();
+  static String? dbPath;
 
   static Database? _database;
 
@@ -77,8 +79,9 @@ class DatabaseHelper {
     prefs = await SharedPreferences.getInstance();
     final Directory documentsDirectory =
         await getApplicationDocumentsDirectory();
-    String path = join(documentsDirectory.path, 'passwords.db');
+    dbPath = join(documentsDirectory.path, 'passwords.db');
     int version = 4;
+    isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
 
     if (Platform.isWindows) {
       sqfliteFfiInit();
@@ -86,7 +89,7 @@ class DatabaseHelper {
     }
 
     final db = await openDatabase(
-      path,
+      dbPath!,
       version: version,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
@@ -101,6 +104,11 @@ class DatabaseHelper {
   }
 
   Future<List<Password>> getPasswords() async {
+    isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
+    if (isGoogleSyncEnabled!) {
+      await GdriveHelper.restoreBackup();
+    }
+
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('passwords');
     final generatedList = List.generate(maps.length, (i) {
@@ -131,11 +139,13 @@ class DatabaseHelper {
     }
   }
 
-  // Function to insert a new password record
   Future<int> insertPassword(String masterPassword, Password password) async {
+    isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
+    if (isGoogleSyncEnabled!) {
+      await GdriveHelper.restoreBackup();
+    }
     final db = await database;
     final res = await db.insert('passwords', password.toMap(masterPassword));
-    final isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
     if (res != 0 && isGoogleSyncEnabled!) {
       await GdriveHelper.uploadBackup();
     }
@@ -143,9 +153,12 @@ class DatabaseHelper {
   }
 
   Future<int> deletePassword(int id) async {
+    isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
+    if (isGoogleSyncEnabled!) {
+      await GdriveHelper.restoreBackup();
+    }
     final db = await database;
     final res = await db.delete('passwords', where: 'id = ?', whereArgs: [id]);
-    final isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
     if (res != 0 && isGoogleSyncEnabled!) {
       await GdriveHelper.uploadBackup();
     }
@@ -153,6 +166,10 @@ class DatabaseHelper {
   }
 
   Future<int> updatePassword(String masterPassword, Password password) async {
+    isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
+    if (isGoogleSyncEnabled!) {
+      await GdriveHelper.restoreBackup();
+    }
     final db = await database;
     final res = await db.update(
       'passwords',
@@ -160,7 +177,6 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [password.id],
     );
-    final isGoogleSyncEnabled = prefs!.getBool('isGoogleSyncEnabled');
     if (res != 0 && isGoogleSyncEnabled!) {
       await GdriveHelper.uploadBackup();
     }

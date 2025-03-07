@@ -15,8 +15,12 @@ class GdriveHelper {
   static desktop.GoogleSignIn? desktopSignIn;
   static mobile.GoogleSignIn? mobileSignIn;
   static mobile.GoogleSignInAccount? mobileUser;
+  static drive.DriveApi? driveClient;
+  static String? dbPath;
+  static String? folderId;
+  static String cloudHash = '';
 
-  static void init() {
+  static Future<void> init() async {
     if (Platform.isAndroid || Platform.isIOS) {
       mobileSignIn = mobile.GoogleSignIn(
         scopes: ['https://www.googleapis.com/auth/drive.file'],
@@ -34,17 +38,28 @@ class GdriveHelper {
     }
   }
 
+  static Future<void> initDrive() async {
+    driveClient = await getDriveClient();
+    dbPath = await getApplicationDocumentsDirectory().then(
+      (value) => '${value.path}/passwords.db',
+    );
+    folderId = await getOrCreateFolder("SecretKeeper");
+  }
+
   static Future<void> signIn() async {
-    init();
+    await init();
     if (Platform.isAndroid || Platform.isIOS) {
       mobileUser = await mobileSignIn!.signIn();
+      if (mobileUser == null) {
+        throw Exception('Failed to sign in with Google');
+      }
     } else {
       await desktopSignIn!.signIn();
     }
   }
 
   static Future<void> signInSilently() async {
-    init();
+    await init();
     if (Platform.isAndroid || Platform.isIOS) {
       mobileUser = await mobileSignIn!.signInSilently();
     } else {
@@ -92,21 +107,14 @@ class GdriveHelper {
     return sha256.convert(bytes).toString();
   }
 
-  static Future<String> getDatabasePath() async {
-    final dir = await getApplicationDocumentsDirectory();
-    return '${dir.path}/passwords.db'; // Change to match your SQLite DB name
-  }
-
-  static Future<(dynamic, dynamic)> getMetadata(
-    drive.DriveApi driveClient,
-  ) async {
-    final metadataFileList = await driveClient.files.list(
+  static Future<(dynamic, dynamic)> getMetadata() async {
+    final metadataFileList = await driveClient!.files.list(
       q: "name='backup_metadata.json'",
     );
     if (metadataFileList.files != null && metadataFileList.files!.isNotEmpty) {
       final metadataFile = metadataFileList.files!.first;
       final metadataStream =
-          await driveClient.files.get(
+          await driveClient!.files.get(
                 metadataFile.id!,
                 downloadOptions: drive.DownloadOptions.fullMedia,
               )
@@ -119,50 +127,39 @@ class GdriveHelper {
     return (null, null);
   }
 
-  static bool isLocalNewer(String localTimestamp, String cloudTimestamp) {
-    DateTime localTime = DateTime.parse(localTimestamp);
-    DateTime cloudTime = DateTime.parse(cloudTimestamp);
-    return localTime.isAfter(cloudTime);
-  }
-
-  static Future<bool> checkMetadata() async {
-    final drive.DriveApi driveClient = await getDriveClient();
-    final (metadataJson, _) = await getMetadata(driveClient);
-    final dbPath = await getDatabasePath();
-    final dbFile = File(dbPath);
-    final locHash = await computeFileHash(dbPath);
-    final locUpdatedAt = dbFile.lastModifiedSync().toIso8601String();
-    if (metadataJson != null) {
-      final cloudHash = metadataJson["hash"];
-      final cloudUpdatedAt = metadataJson["updated_at"];
-      if (cloudHash != locHash && isLocalNewer(cloudUpdatedAt, locUpdatedAt)) {
-        return true;
+  static Future<bool> checkMetadata(
+    drive.DriveApi driveClient,
+    String locHash,
+  ) async {
+    if (cloudHash == '') {
+      final (metadataJson, _) = await getMetadata();
+      if (metadataJson != null) {
+        cloudHash = metadataJson["hash"];
       }
+    }
+    if (cloudHash != locHash) {
+      return true;
     }
 
     return false;
   }
 
-  static Future<void> uploadBackup({bool init = false}) async {
-    final drive.DriveApi driveClient = await getDriveClient();
-    final String dbPath = await getDatabasePath();
-    final String newHash = await computeFileHash(dbPath);
-    final String? folderId = await getOrCreateFolder("SecretKeeper");
+  static Future<void> uploadBackup() async {
+    if (dbPath == null || folderId == null || driveClient == null) {
+      await initDrive();
+    }
+    final String newHash = await computeFileHash(dbPath!);
 
     // await DatabaseHelper().closeDatabase();
-    final fileList = await driveClient.files.list(
+    final fileList = await driveClient!.files.list(
       q: "'$folderId' in parents and name='latest_backup.db'",
     );
     if (fileList.files != null && fileList.files!.isNotEmpty) {
       final existingFile = fileList.files!.first;
-      final (metadataJson, metadataFile) = await getMetadata(driveClient);
+      final (metadataJson, metadataFile) = await getMetadata();
       if (metadataJson != null && metadataFile != null) {
-        final oldHash = metadataJson["hash"];
-        if (oldHash == newHash && !init) {
-          return;
-        }
-        await driveClient.files.delete(existingFile.id!);
-        await driveClient.files.delete(metadataFile.id!);
+        await driveClient!.files.delete(existingFile.id!);
+        await driveClient!.files.delete(metadataFile.id!);
       }
     }
 
@@ -171,15 +168,15 @@ class GdriveHelper {
     file.name = "latest_backup.db";
     file.parents = [folderId!];
     final media = drive.Media(
-      File(dbPath).openRead(),
-      File(dbPath).lengthSync(),
+      File(dbPath!).openRead(),
+      File(dbPath!).lengthSync(),
     );
-    await driveClient.files.create(file, uploadMedia: media);
+    await driveClient!.files.create(file, uploadMedia: media);
 
     // Upload metadata
     var metadata = drive.File();
     metadata.name = "backup_metadata.json";
-    metadata.parents = [folderId];
+    metadata.parents = [folderId!];
     final metadataContent = jsonEncode({
       "hash": newHash,
       "updated_at": DateTime.now().toIso8601String(),
@@ -188,41 +185,35 @@ class GdriveHelper {
       Stream.value(utf8.encode(metadataContent)),
       metadataContent.length,
     );
-    await driveClient.files.create(metadata, uploadMedia: metadataMedia);
+
+    cloudHash = newHash;
+    await driveClient!.files.create(metadata, uploadMedia: metadataMedia);
   }
 
   static Future<void> restoreBackup() async {
-    final driveClient = await getDriveClient();
-    final dbPath = await getDatabasePath();
-    final String curHash = await computeFileHash(dbPath);
-    final folderId = await getOrCreateFolder("SecretKeeper");
+    if (dbPath == null || folderId == null || driveClient == null) {
+      await initDrive();
+    }
+    final String curHash = await computeFileHash(dbPath!);
 
-    // await DatabaseHelper().closeDatabase();
-    final fileList = await driveClient.files.list(
-      q: "'$folderId' in parents and name='latest_backup.db'",
-    );
-    if (fileList.files == null || fileList.files!.isEmpty) {
-      uploadBackup();
-    } else {
-      final (metadataJson, _) = await getMetadata(driveClient);
-      if (metadataJson != null) {
-        if (metadataJson["hash"] == curHash) {
-          return;
-        } else {
-          final backupFile = fileList.files!.first;
-          final mediaStream =
-              await driveClient.files.get(
-                    backupFile.id!,
-                    downloadOptions: drive.DownloadOptions.fullMedia,
-                  )
-                  as drive.Media;
-          final fileBytes = await mediaStream.stream.fold<List<int>>(
-            <int>[],
-            (previous, element) => previous..addAll(element),
-          );
-          File(dbPath).writeAsBytesSync(fileBytes);
-        }
-      }
+    final downloadDB = await checkMetadata(driveClient!, curHash);
+
+    if (downloadDB) {
+      final fileList = await driveClient!.files.list(
+        q: "'$folderId' in parents and name='latest_backup.db'",
+      );
+      final backupFile = fileList.files!.first;
+      final mediaStream =
+          await driveClient!.files.get(
+                backupFile.id!,
+                downloadOptions: drive.DownloadOptions.fullMedia,
+              )
+              as drive.Media;
+      final fileBytes = await mediaStream.stream.fold<List<int>>(
+        <int>[],
+        (previous, element) => previous..addAll(element),
+      );
+      File(dbPath!).writeAsBytesSync(fileBytes);
     }
   }
 
