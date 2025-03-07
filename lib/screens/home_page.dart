@@ -51,7 +51,7 @@ class _HomePageState extends State<HomePage> {
     _refreshPasswords();
   }
 
-  void _refreshPasswords() async {
+  Future<void> _refreshPasswords() async {
     setState(() {
       isProcessing = true;
     });
@@ -90,7 +90,7 @@ class _HomePageState extends State<HomePage> {
                 ? IconButton(
                   icon: Icon(Icons.sync_outlined, color: context.accent),
                   onPressed: () async {
-                    _refreshPasswords();
+                    await _refreshPasswords();
                   },
                 )
                 : SizedBox.shrink(),
@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> {
                 ? Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
                   onRefresh: () async {
-                    _refreshPasswords();
+                    await _refreshPasswords();
                   },
                   child: FutureBuilder<List<Password>>(
                     future: DatabaseHelper().getPasswords(),

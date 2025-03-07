@@ -63,7 +63,7 @@ class GdriveHelper {
     if (Platform.isAndroid || Platform.isIOS) {
       mobileUser = await mobileSignIn!.signInSilently();
     } else {
-      await desktopSignIn!.signInOffline();
+      await desktopSignIn!.signIn();
     }
   }
 
@@ -131,11 +131,9 @@ class GdriveHelper {
     drive.DriveApi driveClient,
     String locHash,
   ) async {
-    if (cloudHash == '') {
-      final (metadataJson, _) = await getMetadata();
-      if (metadataJson != null) {
-        cloudHash = metadataJson["hash"];
-      }
+    final (metadataJson, _) = await getMetadata();
+    if (metadataJson != null) {
+      cloudHash = metadataJson["hash"];
     }
     if (cloudHash != locHash) {
       return true;
@@ -150,7 +148,6 @@ class GdriveHelper {
     }
     final String newHash = await computeFileHash(dbPath!);
 
-    // await DatabaseHelper().closeDatabase();
     final fileList = await driveClient!.files.list(
       q: "'$folderId' in parents and name='latest_backup.db'",
     );
