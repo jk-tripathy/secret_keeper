@@ -53,6 +53,7 @@ dependencies:
   url_launcher: ^6.3.1
   flutter_dotenv: ^5.2.1
   sqflite: ^2.4.2
+  msix: ^3.16.8
 
 dev_dependencies:
   flutter_test:
@@ -86,6 +87,13 @@ flutter:
     - assets/icon/logo.png
     - .env
   #   - images/a_dot_ham.jpeg
+
+msix_config:
+  display_name: Secret Keeper
+  publisher_display_name: jajajajkt
+  identity_name: secretKeeper.app
+  msix_version: 1.5.2.0
+  logo_path: C:\Users\jatin\Documents\secret_keeper\assets\icon\logo.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

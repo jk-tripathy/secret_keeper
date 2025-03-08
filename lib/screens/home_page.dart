@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:secret_keeper/screens/add_password_screen.dart';
 import 'package:secret_keeper/constants/colors.dart';
@@ -46,7 +48,11 @@ class _HomePageState extends State<HomePage> {
     });
 
     if (isGoogleSyncEnabled) {
-      await GdriveHelper.signInSilently();
+      if (Platform.isWindows) {
+        await GdriveHelper.signIn();
+      } else {
+        await GdriveHelper.signInSilently();
+      }
     }
     _refreshPasswords();
   }
