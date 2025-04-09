@@ -156,6 +156,38 @@ class _AddPasswordScreenState extends State<AddPasswordScreen> {
                           padding: const EdgeInsets.all(8.0),
                           child: TextFormField(
                             controller: _passwordController,
+                            textInputAction: TextInputAction.go,
+                            onFieldSubmitted: (value) async {
+                              if (widget.isUpdate) {
+                                if (_formKey.currentState!.validate()) {
+                                  updatePassword(
+                                    masterPassword,
+                                    widget.passwordItem!.id!,
+                                    _siteController.text,
+                                    _usernameController.text,
+                                    _passwordController.text,
+                                    widget.passwordItem!.pinned,
+                                  );
+                                }
+                              } else {
+                                if (_formKey.currentState!.validate()) {
+                                  savePassword(
+                                    masterPassword,
+                                    _siteController.text,
+                                    _usernameController.text,
+                                    _passwordController.text,
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Please fill all the fields',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
                             decoration: InputDecoration(
                               labelText: 'Password',
                               border: OutlineInputBorder(),

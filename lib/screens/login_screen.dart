@@ -106,6 +106,28 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: TextField(
                               controller: _masterPasswordController,
                               obscureText: _obscureMasterText,
+                              textInputAction: TextInputAction.go,
+                              onSubmitted: (value) async {
+                                if (_isMasterPasswordSet) {
+                                  bool isCorrect =
+                                      await PasswordHelper.validateMasterPassword(
+                                        _masterPasswordController.text,
+                                      );
+                                  if (isCorrect) {
+                                    _navigateToHomePage();
+                                  } else {
+                                    _showSnackBar('Incorrect Master Password.');
+                                  }
+                                } else if (_signUpPasswordController1.text ==
+                                    _signUpPasswordController2.text) {
+                                  PasswordHelper.setAndSaveMasterPassword(
+                                    _signUpPasswordController1.text,
+                                  );
+                                  _navigateToHomePage();
+                                } else {
+                                  _showSnackBar('Passwords do not match.');
+                                }
+                              },
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(),
                                 labelText: 'Master Password',
@@ -170,6 +192,28 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: TextField(
                               controller: _signUpPasswordController2,
                               obscureText: _obscureSignupText2,
+                              textInputAction: TextInputAction.go,
+                              onSubmitted: (value) async {
+                                if (_isMasterPasswordSet) {
+                                  bool isCorrect =
+                                      await PasswordHelper.validateMasterPassword(
+                                        _masterPasswordController.text,
+                                      );
+                                  if (isCorrect) {
+                                    _navigateToHomePage();
+                                  } else {
+                                    _showSnackBar('Incorrect Master Password.');
+                                  }
+                                } else if (_signUpPasswordController1.text ==
+                                    _signUpPasswordController2.text) {
+                                  PasswordHelper.setAndSaveMasterPassword(
+                                    _signUpPasswordController1.text,
+                                  );
+                                  _navigateToHomePage();
+                                } else {
+                                  _showSnackBar('Passwords do not match.');
+                                }
+                              },
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(),
                                 labelText: 'Confirm Master Password',
