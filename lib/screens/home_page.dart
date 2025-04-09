@@ -49,6 +49,7 @@ class _HomePageState extends State<HomePage> {
 
     if (isGoogleSyncEnabled) {
       if (Platform.isWindows) {
+        await GdriveHelper.signOut();
         await GdriveHelper.signIn();
       } else {
         await GdriveHelper.signInSilently();

@@ -47,7 +47,6 @@ class GdriveHelper {
   }
 
   static Future<void> signIn() async {
-    await init();
     if (Platform.isAndroid || Platform.isIOS) {
       mobileUser = await mobileSignIn!.signIn();
       if (mobileUser == null) {
@@ -59,7 +58,6 @@ class GdriveHelper {
   }
 
   static Future<void> signInSilently() async {
-    await init();
     if (Platform.isAndroid || Platform.isIOS) {
       mobileUser = await mobileSignIn!.signInSilently();
     } else {
